@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "build": "tsc",
+    "format": "prettier --write .",
     "ignores": "ignore-sync .",
     "lint": "eslint \"$INIT_CWD\" --cache --ext js,ts,jsx,tsx",
     "sdks": "yarn dlx @yarnpkg/sdks vscode"
