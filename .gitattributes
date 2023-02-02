@@ -7,3 +7,5 @@
 # ignore-sync
 .gitignore      linguist-generated
 .eslintignore   linguist-generated
+.prettierignore linguist-generated
+.npmignore      linguist-generated
