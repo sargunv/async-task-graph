@@ -9,10 +9,9 @@
   ],
   "scripts": {
     "build": "tsc",
-    "format": "prettier --write .",
-    "ignores": "ignore-sync .",
-    "lint": "eslint \"$INIT_CWD\" --cache --ext js,ts,jsx,tsx",
-    "sdks": "yarn dlx @yarnpkg/sdks vscode"
+    "configure": "yarn dlx @yarnpkg/sdks vscode && ignore-sync .",
+    "fix": "eslint --cache --ext js,ts,jsx,tsx --fix && prettier --write .",
+    "lint": "eslint --cache --ext js,ts,jsx,tsx && prettier --check . --loglevel warn"
   },
   "eslintConfig": {
     "parserOptions": {
