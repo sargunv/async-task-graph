@@ -8,10 +8,11 @@
     "./dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig-build.json",
     "configure": "yarn dlx @yarnpkg/sdks vscode && ignore-sync .",
     "fix": "eslint --cache --ext js,ts,jsx,tsx --fix && prettier --write .",
-    "lint": "eslint --cache --ext js,ts,jsx,tsx && prettier --check . --loglevel warn"
+    "lint": "eslint --cache --ext js,ts,jsx,tsx && prettier --check . --loglevel warn",
+    "test": "vitest"
   },
   "eslintConfig": {
     "parserOptions": {
@@ -35,7 +36,9 @@
     "ignore-sync": "^6.0.2",
     "prettier": "^2.8.3",
     "prettier-plugin-packagejson": "^2.4.2",
-    "typescript": "^4.9.5"
+    "typescript": "^4.9.5",
+    "vite": "^4.0.4",
+    "vitest": "^0.28.3"
   },
   "packageManager": "yarn@4.0.0-rc.37"
 }

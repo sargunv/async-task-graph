@@ -1,8 +1,6 @@
 {
   "extends": "@sargunv/typescript-config/node",
-  "include": ["src/**/*"],
   "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
+    "outDir": "out"
   }
 }
