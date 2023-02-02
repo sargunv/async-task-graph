@@ -1,0 +1,5 @@
+[local]
+.gitignore-sync
+
+[inline]
+prettier.config.cjs

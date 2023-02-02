@@ -1,4 +1,39 @@
 {
   "name": "async-task-graph",
+  "version": "0.1.0",
+  "description": "Aids in writing asynchronous task graphs with strong typing.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "./dist"
+  ],
+  "scripts": {
+    "ignores": "ignore-sync .",
+    "lint": "eslint \"$INIT_CWD\" --cache --ext js,ts,jsx,tsx",
+    "sdks": "yarn dlx @yarnpkg/sdks vscode"
+  },
+  "eslintConfig": {
+    "parserOptions": {
+      "tsconfigRootDir": "."
+    },
+    "extends": [
+      "@sargunv/eslint-config",
+      "@sargunv/eslint-config/mixins/ts-strict"
+    ],
+    "root": true
+  },
+  "dependencies": {
+    "graph-data-structure": "^3.1.1"
+  },
+  "devDependencies": {
+    "@sargunv/eslint-config": "^0.1.0",
+    "@sargunv/prettier-config": "^0.1.0",
+    "@sargunv/typescript-config": "^0.1.0",
+    "eslint": "^8.33.0",
+    "ignore-sync": "^6.0.2",
+    "prettier": "^2.8.3",
+    "prettier-plugin-packagejson": "^2.4.2",
+    "typescript": "^4.9.5"
+  },
   "packageManager": "yarn@4.0.0-rc.37"
 }
