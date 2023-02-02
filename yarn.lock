@@ -159,6 +159,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:^18.11.18":
+  version: 18.11.18
+  resolution: "@types/node@npm:18.11.18"
+  checksum: bd39552701928d4a1613bc46adf8b65f8212064c2b5475a67161b6c4cef21ddb0a5c2ba062673213f8f5301ef6e171241a9e274a9b59c9fc1f5e2b69764740eb
+  languageName: node
+  linkType: hard
+
 "@types/semver@npm:^7.3.12":
   version: 7.3.13
   resolution: "@types/semver@npm:7.3.13"
@@ -408,6 +415,7 @@ __metadata:
     "@sargunv/eslint-config": "npm:^0.1.0"
     "@sargunv/prettier-config": "npm:^0.1.0"
     "@sargunv/typescript-config": "npm:^0.1.0"
+    "@types/node": "npm:^18.11.18"
     eslint: "npm:^8.33.0"
     graph-data-structure: "npm:^3.1.1"
     ignore-sync: "npm:^6.0.2"

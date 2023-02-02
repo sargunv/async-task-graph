@@ -8,6 +8,7 @@
     "./dist"
   ],
   "scripts": {
+    "build": "tsc",
     "ignores": "ignore-sync .",
     "lint": "eslint \"$INIT_CWD\" --cache --ext js,ts,jsx,tsx",
     "sdks": "yarn dlx @yarnpkg/sdks vscode"
@@ -29,6 +30,7 @@
     "@sargunv/eslint-config": "^0.1.0",
     "@sargunv/prettier-config": "^0.1.0",
     "@sargunv/typescript-config": "^0.1.0",
+    "@types/node": "^18.11.18",
     "eslint": "^8.33.0",
     "ignore-sync": "^6.0.2",
     "prettier": "^2.8.3",
