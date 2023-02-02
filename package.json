@@ -12,6 +12,7 @@
     "configure": "yarn dlx @yarnpkg/sdks vscode && ignore-sync .",
     "fix": "eslint --cache --ext js,ts,jsx,tsx --fix && prettier --write .",
     "lint": "eslint --cache --ext js,ts,jsx,tsx && prettier --check . --loglevel warn",
+    "prepack": "run build",
     "test": "vitest"
   },
   "eslintConfig": {
