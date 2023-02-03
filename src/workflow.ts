@@ -1,6 +1,32 @@
 import { Graph } from "graph-data-structure"
+import { z } from "zod"
 
 import { typedEmitter } from "./events"
+
+export function workflowDefinition<
+  T extends { context: any; tasks: Record<string, any> } = {
+    context: z.ZodAny
+    tasks: Record<string, z.ZodAny>
+  },
+>(_def: T) {
+  let tasks = {}
+
+  return {
+    addTask: <Id extends TaskId<T>, DepId extends ValidDeps<T, Id>>(
+      t: Task<T, Id, DepId>,
+    ) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      ;(tasks as any)[t.id] = t
+    },
+    executeSerially: (
+      context: z.TypeOf<T["context"]>,
+      options: { selectedTasks?: Array<keyof T["tasks"]> } = {},
+    ) => {
+      // TODO: Run Zod schema validation checks here, before executing the workflow
+      return executeWorkflowSerially<T>(tasks as any, context, options as any)
+    },
+  }
+}
 
 /**
  * This is a helper type to create a strongly typed workflow definition.
@@ -14,8 +40,8 @@ import { typedEmitter } from "./events"
  */
 export type WorkflowDefinition<
   T extends { context: unknown; tasks: Record<string, unknown> } = {
-    context: unknown
-    tasks: Record<string, unknown>
+    context: z.ZodAny
+    tasks: Record<string, z.ZodAny>
   },
 > = T
 
@@ -40,7 +66,7 @@ export interface Task<
 > {
   id: Id
   dependencies: DepId[]
-  run: (_: TaskRunContext<W, DepId>) => Promise<W["tasks"][Id]>
+  run: (_: TaskRunContext<W, DepId>) => Promise<z.TypeOf<W["tasks"][Id]>>
 }
 
 /**
@@ -51,27 +77,16 @@ export interface TaskRunContext<
   W extends WorkflowDefinition,
   DepId extends TaskId<W>,
 > {
-  getTaskResult: <D extends DepId>(id: D) => W["tasks"][D]
-  context: W["context"]
+  getTaskResult: <D extends DepId>(id: D) => z.TypeOf<W["tasks"][D]>
+  context: z.TypeOf<W["context"]>
 }
-
-/**
- * Helper function to return a strongly typed function that helps in writing
- * correct tasks for a given task graph, with strong inferred types.
- */
-export const taskFnForWorkflow =
-  <W extends WorkflowDefinition>() =>
-  <Id extends TaskId<W>, DepId extends ValidDeps<W, Id>>(
-    t: Task<W, Id, DepId>,
-  ) =>
-    t
 
 /**
  * Emitted when a workflow begins execution, right after the task graph is
  * topo-sorted.
  */
 export interface WorkflowStartArgs<W extends WorkflowDefinition> {
-  taskOrder: TaskId<W>[]
+  taskOrder: Array<keyof W["tasks"]>
 }
 
 /**
@@ -79,19 +94,16 @@ export interface WorkflowStartArgs<W extends WorkflowDefinition> {
  * once per task.
  */
 export interface TaskStartArgs<W extends WorkflowDefinition> {
-  id: TaskId<W>
+  id: keyof W["tasks"]
 }
 
 /**
  * Emitted when a task finishes execution. Can be emitted multiple times, up to
  * once per task. If a task throws or is skipped, this event will not be emitted.
  */
-export interface TaskFinishArgs<
-  W extends WorkflowDefinition,
-  Id extends TaskId<W> = TaskId<W>,
-> {
-  id: Id
-  result: W["tasks"][Id]
+export interface TaskFinishArgs<W extends WorkflowDefinition> {
+  id: keyof W["tasks"]
+  result: Array<keyof W["tasks"]>
 }
 
 /**
@@ -99,7 +111,7 @@ export interface TaskFinishArgs<
  * once per task.
  */
 export interface TaskThrowArgs<W extends WorkflowDefinition> {
-  id: TaskId<W>
+  id: keyof W["tasks"]
   error: Error
 }
 
@@ -108,9 +120,9 @@ export interface TaskThrowArgs<W extends WorkflowDefinition> {
  * threw errors. Can be emitted multiple times, up to once per task.
  */
 export interface TaskSkipArgs<W extends WorkflowDefinition> {
-  id: TaskId<W>
-  erroredDependencies: TaskId<W>[]
-  skippedDependencies: TaskId<W>[]
+  id: keyof W["tasks"]
+  erroredDependencies: Array<keyof W["tasks"]>
+  skippedDependencies: Array<keyof W["tasks"]>
 }
 
 /**
@@ -131,9 +143,9 @@ export type WorkflowFinishArgs<W extends WorkflowDefinition> = {
  * This function executes a task graph one task at a time, in topological order.
  * It returns an event emitter than can be used to observe task execution.
  */
-export const executeWorkflowSerially = <W extends WorkflowDefinition>(
+const executeWorkflowSerially = <W extends WorkflowDefinition>(
   tasks: { [Id in TaskId<W>]: Task<W, Id, ValidDeps<W, Id>> },
-  context: W["context"],
+  context: z.TypeOf<W["context"]>,
   options: { selectedTasks?: TaskId<W>[] } = {},
 ) => {
   const emitter = typedEmitter<{
@@ -169,7 +181,7 @@ export const executeWorkflowSerially = <W extends WorkflowDefinition>(
 
       // we might add edges before nodes, but this library will add nodes
       // implicitly when adding edges
-      graph.addEdge(task.id, dep)
+      graph.addEdge(dep, task.id)
     }
   }
 
@@ -177,9 +189,10 @@ export const executeWorkflowSerially = <W extends WorkflowDefinition>(
     throw new Error("Task graph has a cycle")
   }
 
-  const taskOrder: TaskId<W>[] = graph
-    .topologicalSort(options.selectedTasks, true)
-    .reverse()
+  const taskOrder = graph.topologicalSort(
+    options.selectedTasks,
+    true,
+  ) as TaskId<W>[]
 
   const taskMap = new Map<
     TaskId<W>,

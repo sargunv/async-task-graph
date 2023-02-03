@@ -1,30 +1,29 @@
 import { describe, it, expect, vi } from "vitest"
 import {
-  executeWorkflowSerially,
-  taskFnForWorkflow,
-  WorkflowDefinition,
+  workflowDefinition
 } from "./workflow"
+import { z } from 'zod';
 
-type Test = WorkflowDefinition<{
-  context: object
-  tasks: {
-    foo: string
-    bar: number
-    baz: void
-  }
-}>
+describe("zod workflow", () => {
+  it("works?", () => {
+    const workflow = workflowDefinition({
+      context: z.object({
+        hello: z.string()
+      }),
+      tasks: {
+        foo: z.string(),
+        bar: z.number(),
+        baz: z.void()
+      }
+    })
 
-const newTask = taskFnForWorkflow<Test>()
-
-describe("simple workflow", () => {
-  it("works", () => {
-    const foo = newTask({
+    workflow.addTask({
       id: "foo",
       dependencies: [],
       run: async ({ context }) => JSON.stringify(context),
     })
 
-    const bar = newTask({
+    workflow.addTask({
       id: "bar",
       dependencies: ["foo"],
       async run({ getTaskResult }) {
@@ -33,7 +32,7 @@ describe("simple workflow", () => {
       },
     })
 
-    const baz = newTask({
+    workflow.addTask({
       id: "baz",
       dependencies: ["bar"],
       async run({ getTaskResult }) {
@@ -41,10 +40,7 @@ describe("simple workflow", () => {
       },
     })
 
-    const emitter = executeWorkflowSerially<Test>(
-      { foo, baz, bar },
-      { hello: "world" },
-    )
+    const emitter = workflow.executeSerially({ hello: 'world' })
 
     emitter.on("workflowStart", ({ taskOrder }) => {
       expect(taskOrder).toEqual(["foo", "bar", "baz"])
@@ -56,6 +52,7 @@ describe("simple workflow", () => {
         expect(completed).toBe(true)
         expect(erroredTasks).toEqual([])
         expect(skippedTasks).toEqual([])
+        // This seems incorrect ---v
         expect(finishedTasks.sort()).toEqual(["foo", "bar", "baz"].sort())
       },
     )
