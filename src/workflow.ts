@@ -169,7 +169,7 @@ export const executeWorkflowSerially = <W extends WorkflowDefinition>(
 
       // we might add edges before nodes, but this library will add nodes
       // implicitly when adding edges
-      graph.addEdge(dep, task.id)
+      graph.addEdge(task.id, dep)
     }
   }
 
@@ -177,10 +177,9 @@ export const executeWorkflowSerially = <W extends WorkflowDefinition>(
     throw new Error("Task graph has a cycle")
   }
 
-  const taskOrder = graph.topologicalSort(
-    options.selectedTasks,
-    true,
-  ) as TaskId<W>[]
+  const taskOrder: TaskId<W>[] = graph
+    .topologicalSort(options.selectedTasks, true)
+    .reverse()
 
   const taskMap = new Map<
     TaskId<W>,

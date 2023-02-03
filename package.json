@@ -1,6 +1,6 @@
 {
   "name": "async-task-graph",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Aids in writing asynchronous task graphs with strong typing.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -13,6 +13,7 @@
     "fix": "eslint --cache --ext js,ts,jsx,tsx --fix && prettier --write .",
     "lint": "eslint --cache --ext js,ts,jsx,tsx && prettier --check . --loglevel warn",
     "prepack": "run build",
+    "prepublish": "run lint && run test --run",
     "test": "vitest"
   },
   "eslintConfig": {
