@@ -59,7 +59,7 @@ export interface TaskRunContext<
  * Helper function to return a strongly typed function that helps in writing
  * correct tasks for a given task graph, with strong inferred types.
  */
-export const taskFnForRegistry =
+export const taskFnForWorkflow =
   <W extends WorkflowDefinition>() =>
   <Id extends TaskId<W>, DepId extends ValidDeps<W, Id>>(
     t: Task<W, Id, DepId>,
@@ -84,7 +84,7 @@ export interface TaskStartArgs<W extends WorkflowDefinition> {
 
 /**
  * Emitted when a task finishes execution. Can be emitted multiple times, up to
- * once per task. If a task fails or is skipped, this event will not be emitted.
+ * once per task. If a task throws or is skipped, this event will not be emitted.
  */
 export interface TaskFinishArgs<
   W extends WorkflowDefinition,
@@ -95,21 +95,21 @@ export interface TaskFinishArgs<
 }
 
 /**
- * Emitted when a task fails execution. Can be emitted multiple times, up to
+ * Emitted when a task throws an error. Can be emitted multiple times, up to
  * once per task.
  */
-export interface TaskFailArgs<W extends WorkflowDefinition> {
+export interface TaskThrowArgs<W extends WorkflowDefinition> {
   id: TaskId<W>
   error: Error
 }
 
 /**
  * Emitted when a task is skipped because its dependencies were skipped or
- * failed execution. Can be emitted multiple times, up to once per task.
+ * threw errors. Can be emitted multiple times, up to once per task.
  */
 export interface TaskSkipArgs<W extends WorkflowDefinition> {
   id: TaskId<W>
-  failedDependencies: TaskId<W>[]
+  erroredDependencies: TaskId<W>[]
   skippedDependencies: TaskId<W>[]
 }
 
@@ -120,11 +120,11 @@ export type WorkflowFinishArgs<W extends WorkflowDefinition> = {
   finishedTasks: TaskFinishArgs<W>[]
 } & (
   | {
-      failedTasks: TaskFailArgs<W>[]
+      erroredTasks: TaskThrowArgs<W>[]
       skippedTasks: TaskSkipArgs<W>[]
       completed: false
     }
-  | { failedTasks: []; skippedTasks: []; completed: true }
+  | { erroredTasks: []; skippedTasks: []; completed: true }
 )
 
 /**
@@ -140,10 +140,10 @@ export const executeWorkflowSerially = <W extends WorkflowDefinition>(
     workflowStart: WorkflowStartArgs<W>
     taskStart: TaskStartArgs<W>
     taskFinish: TaskFinishArgs<W>
-    taskFail: TaskFailArgs<W>
+    taskThrow: TaskThrowArgs<W>
     taskSkip: TaskSkipArgs<W>
     workflowFinish: WorkflowFinishArgs<W>
-    workflowError: { error: unknown }
+    workflowThrow: { error: Error }
   }>()
 
   const graph = Graph()
@@ -194,7 +194,7 @@ export const executeWorkflowSerially = <W extends WorkflowDefinition>(
 
     const taskFinishEvents = new Map<TaskId<W>, TaskFinishArgs<W>>()
     const taskSkipEvents = new Map<TaskId<W>, TaskSkipArgs<W>>()
-    const taskFailEvents = new Map<TaskId<W>, TaskFailArgs<W>>()
+    const taskThrowEvents = new Map<TaskId<W>, TaskThrowArgs<W>>()
 
     const getTaskResult = (id: TaskId<W>) => {
       if (taskFinishEvents.has(id)) {
@@ -207,21 +207,21 @@ export const executeWorkflowSerially = <W extends WorkflowDefinition>(
 
     const handleAllTasks = async () => {
       for (const id of taskOrder) {
-        const failedDependencies = []
+        const erroredDependencies = []
         const skippedDependencies = []
 
         for (const dep of taskMap.get(id)!.dependencies) {
-          if (taskFailEvents.has(dep)) {
-            failedDependencies.push(dep)
+          if (taskThrowEvents.has(dep)) {
+            erroredDependencies.push(dep)
           } else if (taskSkipEvents.has(dep)) {
             skippedDependencies.push(dep)
           }
         }
 
-        if (failedDependencies.length > 0 || skippedDependencies.length > 0) {
+        if (erroredDependencies.length > 0 || skippedDependencies.length > 0) {
           taskSkipEvents.set(id, {
             id,
-            failedDependencies,
+            erroredDependencies,
             skippedDependencies,
           })
           emitter.emit("taskSkip", taskSkipEvents.get(id)!)
@@ -238,11 +238,11 @@ export const executeWorkflowSerially = <W extends WorkflowDefinition>(
             emitter.emit("taskFinish", taskFinishEvents.get(id)!)
           } catch (error) {
             if (error instanceof Error) {
-              taskFailEvents.set(id, { id, error })
+              taskThrowEvents.set(id, { id, error })
             } else {
-              taskFailEvents.set(id, { id, error: new Error(String(error)) })
+              taskThrowEvents.set(id, { id, error: new Error(String(error)) })
             }
-            emitter.emit("taskFail", taskFailEvents.get(id)!)
+            emitter.emit("taskThrow", taskThrowEvents.get(id)!)
           }
         }
       }
@@ -250,7 +250,8 @@ export const executeWorkflowSerially = <W extends WorkflowDefinition>(
 
     handleAllTasks()
       .then(() => {
-        const completed = taskSkipEvents.size === 0 && taskFailEvents.size === 0
+        const completed =
+          taskSkipEvents.size === 0 && taskThrowEvents.size === 0
         emitter.emit(
           "workflowFinish",
           // technically a bit redundant but the type checker appreciates it 🥺
@@ -258,19 +259,27 @@ export const executeWorkflowSerially = <W extends WorkflowDefinition>(
             ? {
                 completed,
                 finishedTasks: [...taskFinishEvents.values()],
-                failedTasks: [],
+                erroredTasks: [],
                 skippedTasks: [],
               }
             : {
                 completed,
                 finishedTasks: [...taskFinishEvents.values()],
-                failedTasks: [...taskFailEvents.values()],
+                erroredTasks: [...taskThrowEvents.values()],
                 skippedTasks: [...taskSkipEvents.values()],
               },
         )
         return
       })
-      .catch((error: unknown) => emitter.emit("workflowError", { error }))
+      .catch((error: unknown) => {
+        if (error instanceof Error) {
+          return emitter.emit("workflowThrow", { error })
+        } else {
+          return emitter.emit("workflowThrow", {
+            error: new Error(String(error)),
+          })
+        }
+      })
   })
 
   return emitter

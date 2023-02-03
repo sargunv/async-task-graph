@@ -1,8 +1,7 @@
-import { emit } from "process"
-import { describe, it, assert, expect, vi } from "vitest"
+import { describe, it, expect, vi } from "vitest"
 import {
   executeWorkflowSerially,
-  taskFnForRegistry,
+  taskFnForWorkflow,
   WorkflowDefinition,
 } from "./workflow"
 
@@ -15,7 +14,7 @@ type Test = WorkflowDefinition<{
   }
 }>
 
-const newTask = taskFnForRegistry<Test>()
+const newTask = taskFnForWorkflow<Test>()
 
 describe("simple workflow", () => {
   it("works", () => {
@@ -53,17 +52,17 @@ describe("simple workflow", () => {
 
     emitter.on(
       "workflowFinish",
-      ({ completed, failedTasks, skippedTasks, finishedTasks }) => {
+      ({ completed, erroredTasks, skippedTasks, finishedTasks }) => {
         expect(completed).toBe(true)
-        expect(failedTasks).toEqual([])
+        expect(erroredTasks).toEqual([])
         expect(skippedTasks).toEqual([])
         expect(finishedTasks.sort()).toEqual(["foo", "bar", "baz"].sort())
       },
     )
 
     const noCallMock = vi.fn()
-    emitter.on("workflowError", noCallMock)
-    emitter.on("taskFail", noCallMock)
+    emitter.on("workflowThrow", noCallMock)
+    emitter.on("taskThrow", noCallMock)
     emitter.on("taskSkip", noCallMock)
     expect(noCallMock).not.toHaveBeenCalled()
   })
