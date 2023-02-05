@@ -131,7 +131,7 @@ export type WorkflowFinishArgs<W extends WorkflowDefinition> = {
  * This function executes a task graph one task at a time, in topological order.
  * It returns an event emitter than can be used to observe task execution.
  */
-export const executeWorkflowSerially = <W extends WorkflowDefinition>(
+export const buildSerialWorkflow = <W extends WorkflowDefinition>(
   tasks: { [Id in TaskId<W>]: Task<W, Id, ValidDeps<W, Id>> },
   context: W["context"],
   options: { selectedTasks?: TaskId<W>[] } = {},
@@ -186,9 +186,7 @@ export const executeWorkflowSerially = <W extends WorkflowDefinition>(
     Task<W, TaskId<W>, ValidDeps<W, TaskId<W>>>
   >(Object.entries(tasks))
 
-  // we need to return the emitter before we start emitting events, so we
-  // defer processing to the next tick
-  process.nextTick(() => {
+  const runWorkflow = () => {
     emitter.emit("workflowStart", { taskOrder })
 
     const taskFinishEvents = new Map<TaskId<W>, TaskFinishArgs<W>>()
@@ -279,7 +277,10 @@ export const executeWorkflowSerially = <W extends WorkflowDefinition>(
           })
         }
       })
-  })
+  }
 
-  return emitter
+  return {
+    emitter,
+    runWorkflow,
+  }
 }
