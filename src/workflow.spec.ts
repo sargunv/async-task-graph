@@ -23,23 +23,24 @@ describe(`simple workflow: foo -> bar -> baz`, () => {
     const foo = newTask({
       id: `foo`,
       dependencies: [],
-      run: async ({ context }) => JSON.stringify(context),
+      run: ({ context }) => Promise.resolve(JSON.stringify(context)),
     })
 
     const bar = newTask({
       id: `bar`,
       dependencies: [`foo`],
-      async run({ getTaskResult }) {
+      run({ getTaskResult }) {
         const str = getTaskResult(`foo`)
-        return str.length
+        return Promise.resolve(str.length)
       },
     })
 
     const baz = newTask({
       id: `baz`,
       dependencies: [`bar`],
-      async run({ getTaskResult }) {
+      run({ getTaskResult }) {
         getTaskResult(`bar`)
+        return Promise.resolve()
       },
     })
 
@@ -52,7 +53,10 @@ describe(`simple workflow: foo -> bar -> baz`, () => {
     const workflowStartMock = vi.fn()
     const workflowFinishMock = vi.fn()
     const noCallMock = vi.fn()
-    emitter.on(`workflowStart`, ({ taskOrder }) => workflowStartMock(taskOrder))
+    emitter.on(
+      `workflowStart`,
+      ({ taskOrder }) => void workflowStartMock(taskOrder),
+    )
     emitter.on(`workflowThrow`, noCallMock)
     emitter.on(`taskThrow`, noCallMock)
     emitter.on(`taskSkip`, noCallMock)
