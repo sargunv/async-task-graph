@@ -18,7 +18,7 @@
     "build": "tsc -p tsconfig-build.json",
     "configure": "yarn dlx @yarnpkg/sdks vscode && ignore-sync .",
     "prepack": "run build",
-    "prepublish": "run lint && run test",
+    "prepublish": "run style-check && run test",
     "style-check": "eslint . && prettier --check .",
     "style-fix": "eslint . --fix && prettier --write .",
     "test": "vitest --run"
