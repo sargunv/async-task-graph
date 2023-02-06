@@ -72,7 +72,7 @@ describe("simple workflow: foo -> bar -> baz", () => {
     const expectedTaskResults = [
       { id: "foo", result: JSON.stringify({ hello: "world" }) },
       { id: "bar", result: 17 },
-      { id: "baz", result: undefined }
+      { id: "baz", result: undefined },
     ]
 
     expect(workflowStartMock).toHaveBeenCalledWith(expectedTaskOrder)

@@ -2,6 +2,13 @@
   "name": "async-task-graph",
   "version": "0.2.1",
   "description": "Aids in writing asynchronous task graphs with strong typing.",
+  "homepage": "https://github.com/sargunv/async-task-graph",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sargunv/async-task-graph.git"
+  },
+  "license": "Apache-2.0",
+  "type": "commonjs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -10,19 +17,20 @@
   "scripts": {
     "build": "tsc -p tsconfig-build.json",
     "configure": "yarn dlx @yarnpkg/sdks vscode && ignore-sync .",
-    "fix": "eslint --cache --ext js,ts,jsx,tsx --fix && prettier --write .",
-    "lint": "eslint --cache --ext js,ts,jsx,tsx && prettier --check . --loglevel warn",
     "prepack": "run build",
-    "prepublish": "run lint && run test --run",
-    "test": "vitest"
+    "prepublish": "run lint && run test",
+    "style-check": "eslint . && prettier --check .",
+    "style-fix": "eslint . --fix && prettier --write .",
+    "test": "vitest --run"
   },
+  "prettier": "@sargunv/prettier-config",
   "eslintConfig": {
     "parserOptions": {
       "tsconfigRootDir": "."
     },
     "extends": [
       "@sargunv/eslint-config",
-      "@sargunv/eslint-config/mixins/ts-strict"
+      "@sargunv/eslint-config/mixins/typescript"
     ],
     "root": true
   },
@@ -30,17 +38,20 @@
     "graph-data-structure": "^3.1.1"
   },
   "devDependencies": {
-    "@sargunv/eslint-config": "^0.1.0",
-    "@sargunv/prettier-config": "^0.1.0",
+    "@sargunv/eslint-config": "^0.2.1",
+    "@sargunv/prettier-config": "^0.2.2",
     "@sargunv/typescript-config": "^0.1.0",
     "@types/node": "^18.11.18",
     "eslint": "^8.33.0",
     "ignore-sync": "^6.0.2",
     "prettier": "^2.8.3",
-    "prettier-plugin-packagejson": "^2.4.2",
     "typescript": "^4.9.5",
     "vite": "^4.0.4",
     "vitest": "^0.28.3"
   },
-  "packageManager": "yarn@4.0.0-rc.37"
+  "packageManager": "yarn@4.0.0-rc.38",
+  "languageName": "node",
+  "publishConfig": {
+    "access": "public"
+  }
 }
