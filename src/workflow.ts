@@ -19,7 +19,7 @@ export type WorkflowDefinition<
   },
 > = T
 
-export type TaskId<W extends WorkflowDefinition> = string & keyof W["tasks"]
+export type TaskId<W extends WorkflowDefinition> = string & keyof W[`tasks`]
 
 /**
  * The valid dependencies for a task are all the other ids in the graph, except
@@ -40,7 +40,7 @@ export interface Task<
 > {
   id: Id
   dependencies: DepId[]
-  run: (_: TaskRunContext<W, DepId>) => Promise<W["tasks"][Id]>
+  run: (_: TaskRunContext<W, DepId>) => Promise<W[`tasks`][Id]>
 }
 
 /**
@@ -51,8 +51,8 @@ export interface TaskRunContext<
   W extends WorkflowDefinition,
   DepId extends TaskId<W>,
 > {
-  getTaskResult: <D extends DepId>(id: D) => W["tasks"][D]
-  context: W["context"]
+  getTaskResult: <D extends DepId>(id: D) => W[`tasks`][D]
+  context: W[`context`]
 }
 
 /**
@@ -91,7 +91,7 @@ export interface TaskFinishArgs<
   Id extends TaskId<W> = TaskId<W>,
 > {
   id: Id
-  result: W["tasks"][Id]
+  result: W[`tasks`][Id]
 }
 
 /**
@@ -133,7 +133,7 @@ export type WorkflowFinishArgs<W extends WorkflowDefinition> = {
  */
 export const buildSerialWorkflow = <W extends WorkflowDefinition>(
   tasks: { [Id in TaskId<W>]: Task<W, Id, ValidDeps<W, Id>> },
-  context: W["context"],
+  context: W[`context`],
   options: { selectedTasks?: TaskId<W>[] } = {},
 ) => {
   const emitter = typedEmitter<{
@@ -174,7 +174,7 @@ export const buildSerialWorkflow = <W extends WorkflowDefinition>(
   }
 
   if (graph.hasCycle()) {
-    throw new Error("Task graph has a cycle")
+    throw new Error(`Task graph has a cycle`)
   }
 
   const taskOrder: TaskId<W>[] = graph
@@ -187,7 +187,7 @@ export const buildSerialWorkflow = <W extends WorkflowDefinition>(
   >(Object.entries(tasks))
 
   const runWorkflow = () => {
-    emitter.emit("workflowStart", { taskOrder })
+    emitter.emit(`workflowStart`, { taskOrder })
 
     const taskFinishEvents = new Map<TaskId<W>, TaskFinishArgs<W>>()
     const taskSkipEvents = new Map<TaskId<W>, TaskSkipArgs<W>>()
@@ -221,9 +221,9 @@ export const buildSerialWorkflow = <W extends WorkflowDefinition>(
             erroredDependencies,
             skippedDependencies,
           })
-          emitter.emit("taskSkip", taskSkipEvents.get(id)!)
+          emitter.emit(`taskSkip`, taskSkipEvents.get(id)!)
         } else {
-          emitter.emit("taskStart", { id })
+          emitter.emit(`taskStart`, { id })
 
           try {
             const result = await taskMap.get(id)!.run({
@@ -232,14 +232,14 @@ export const buildSerialWorkflow = <W extends WorkflowDefinition>(
               context,
             })
             taskFinishEvents.set(id, { id, result })
-            emitter.emit("taskFinish", taskFinishEvents.get(id)!)
+            emitter.emit(`taskFinish`, taskFinishEvents.get(id)!)
           } catch (error) {
             if (error instanceof Error) {
               taskThrowEvents.set(id, { id, error })
             } else {
               taskThrowEvents.set(id, { id, error: new Error(String(error)) })
             }
-            emitter.emit("taskThrow", taskThrowEvents.get(id)!)
+            emitter.emit(`taskThrow`, taskThrowEvents.get(id)!)
           }
         }
       }
@@ -250,7 +250,7 @@ export const buildSerialWorkflow = <W extends WorkflowDefinition>(
         const completed =
           taskSkipEvents.size === 0 && taskThrowEvents.size === 0
         emitter.emit(
-          "workflowFinish",
+          `workflowFinish`,
           // technically a bit redundant but the type checker appreciates it 🥺
           completed
             ? {
@@ -270,9 +270,9 @@ export const buildSerialWorkflow = <W extends WorkflowDefinition>(
       })
       .catch((error: unknown) => {
         if (error instanceof Error) {
-          return emitter.emit("workflowThrow", { error })
+          return emitter.emit(`workflowThrow`, { error })
         } else {
-          return emitter.emit("workflowThrow", {
+          return emitter.emit(`workflowThrow`, {
             error: new Error(String(error)),
           })
         }
