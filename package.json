@@ -17,10 +17,10 @@
   "scripts": {
     "build": "tsc -p tsconfig-build.json",
     "configure": "yarn dlx @yarnpkg/sdks vscode && ignore-sync .",
+    "fix": "eslint . --fix && prettier --write .",
+    "lint": "eslint . && prettier --check .",
     "prepack": "run build",
-    "prepublish": "run style-check && run test",
-    "style-check": "eslint . && prettier --check .",
-    "style-fix": "eslint . --fix && prettier --write .",
+    "prepublish": "run lint && run test",
     "test": "vitest --run"
   },
   "prettier": "@sargunv/prettier-config",
