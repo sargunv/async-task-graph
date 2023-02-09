@@ -18,7 +18,7 @@
     "build": "tsc -p tsconfig-build.json",
     "configure": "yarn dlx @yarnpkg/sdks vscode && ignore-sync .",
     "fix": "eslint . --fix && prettier --write .",
-    "lint": "eslint . && prettier --check .",
+    "lint": "eslint . && prettier --check . --loglevel warn",
     "prepack": "run build",
     "prepublish": "run lint && run test",
     "test": "vitest --run"
@@ -38,16 +38,16 @@
     "graph-data-structure": "^3.1.1"
   },
   "devDependencies": {
-    "@sargunv/eslint-config": "^0.2.2",
+    "@sargunv/eslint-config": "^0.3.0",
     "@sargunv/prettier-config": "^0.2.2",
     "@sargunv/typescript-config": "^0.1.0",
-    "@types/node": "^18.11.18",
+    "@types/node": "^18.13.0",
     "eslint": "^8.33.0",
     "ignore-sync": "^6.0.2",
-    "prettier": "^2.8.3",
+    "prettier": "^2.8.4",
     "typescript": "^4.9.5",
-    "vite": "^4.0.4",
-    "vitest": "^0.28.3"
+    "vite": "^4.1.1",
+    "vitest": "^0.28.4"
   },
   "packageManager": "yarn@4.0.0-rc.38",
   "languageName": "node",

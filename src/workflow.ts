@@ -269,13 +269,11 @@ export const buildSerialWorkflow = <W extends WorkflowDefinition>(
         return
       })
       .catch((error: unknown) => {
-        if (error instanceof Error) {
-          return emitter.emit(`workflowThrow`, { error })
-        } else {
-          return emitter.emit(`workflowThrow`, {
-            error: new Error(String(error)),
-          })
-        }
+        return error instanceof Error
+          ? emitter.emit(`workflowThrow`, { error })
+          : emitter.emit(`workflowThrow`, {
+              error: new Error(String(error)),
+            })
       })
   }
 
