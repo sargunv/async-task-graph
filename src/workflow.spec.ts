@@ -1,32 +1,22 @@
 import { describe, expect, it, vi } from "vitest"
+import { z } from "zod"
 
-import {
-  buildSerialWorkflow,
-  taskFnForWorkflow,
-  WorkflowDefinition,
-} from "./workflow"
+import { makeWorkflowBuilder } from "./index.js"
 
-type Test = WorkflowDefinition<{
-  context: object
-  tasks: {
-    foo: string
-    bar: number
-    baz: void
-  }
-}>
-
-const newTask = taskFnForWorkflow<Test>()
-
-describe(`simple workflow: foo -> bar -> baz`, () => {
+describe(`a linear workflow with no errors`, () => {
   it(`works`, async () => {
-    // Build the workflow
-    const foo = newTask({
-      id: `foo`,
-      dependencies: [],
-      run: ({ context }) => Promise.resolve(JSON.stringify(context)),
+    const wfBuilder = makeWorkflowBuilder({
+      context: { hello: `world` },
+      returns: {
+        foo: z.string(),
+        bar: z.number(),
+        baz: z.void(),
+      },
     })
 
-    const bar = newTask({
+    // we add tasks out of order to test topo-sort later
+
+    wfBuilder.addTask({
       id: `bar`,
       dependencies: [`foo`],
       run({ getTaskResult }) {
@@ -35,7 +25,15 @@ describe(`simple workflow: foo -> bar -> baz`, () => {
       },
     })
 
-    const baz = newTask({
+    wfBuilder.addTask({
+      id: `foo`,
+      dependencies: [],
+      run: ({ context }) => {
+        return Promise.resolve(JSON.stringify(context))
+      },
+    })
+
+    wfBuilder.addTask({
       id: `baz`,
       dependencies: [`bar`],
       run({ getTaskResult }) {
@@ -44,49 +42,46 @@ describe(`simple workflow: foo -> bar -> baz`, () => {
       },
     })
 
-    const { emitter, runWorkflow } = buildSerialWorkflow<Test>(
-      { foo, baz, bar },
-      { hello: `world` },
-    )
+    const workflow = wfBuilder.buildSerialWorkflow()
 
-    // Set up mocks to listen for workflow events
-    const workflowStartMock = vi.fn()
-    const workflowFinishMock = vi.fn()
-    const noCallMock = vi.fn()
-    emitter.on(
-      `workflowStart`,
-      ({ taskOrder }) => void workflowStartMock(taskOrder),
-    )
-    emitter.on(`workflowThrow`, noCallMock)
-    emitter.on(`taskThrow`, noCallMock)
-    emitter.on(`taskSkip`, noCallMock)
+    expect(workflow.taskOrder).toEqual([`foo`, `bar`, `baz`])
 
-    // Set up a promise so that we can wait for the workflow to complete
-    const workflowCompletion = new Promise<void>((resolve) => {
-      emitter.on(`workflowFinish`, (args) => {
-        workflowFinishMock(args)
-        return resolve()
-      })
+    const { emitter, runWorkflow } = workflow
+
+    const taskFinishFn = vi.fn()
+    const taskSkipFn = vi.fn()
+    const taskThrowFn = vi.fn()
+
+    emitter.on(`taskFinish`, taskFinishFn)
+    emitter.on(`taskSkip`, taskSkipFn)
+    emitter.on(`taskThrow`, taskThrowFn)
+
+    const result = await runWorkflow()
+
+    expect(taskFinishFn).toHaveBeenCalledTimes(3)
+    expect(taskFinishFn).toHaveBeenNthCalledWith(1, {
+      id: `foo`,
+      result: `{"hello":"world"}`,
+    })
+    expect(taskFinishFn).toHaveBeenNthCalledWith(2, {
+      id: `bar`,
+      result: 17,
+    })
+    expect(taskFinishFn).toHaveBeenNthCalledWith(3, {
+      id: `baz`,
+      result: undefined,
     })
 
-    // Kick off the workflow and wait for it to finish running
-    runWorkflow()
-    await workflowCompletion
+    expect(taskSkipFn).not.toHaveBeenCalled()
+    expect(taskThrowFn).not.toHaveBeenCalled()
 
-    const expectedTaskOrder = [`foo`, `bar`, `baz`]
-    const expectedTaskResults = [
-      { id: `foo`, result: JSON.stringify({ hello: `world` }) },
-      { id: `bar`, result: 17 },
-      { id: `baz`, result: undefined },
-    ]
+    const { tasksFinished, tasksErrored, tasksSkipped } = result
 
-    expect(workflowStartMock).toHaveBeenCalledWith(expectedTaskOrder)
-    expect(workflowFinishMock).toHaveBeenCalledWith({
-      completed: true,
-      erroredTasks: [],
-      skippedTasks: [],
-      finishedTasks: expectedTaskResults,
-    })
-    expect(noCallMock).not.toHaveBeenCalled()
+    expect(tasksFinished.length).toEqual(3)
+    expect(tasksFinished).toContain(`foo`)
+    expect(tasksFinished).toContain(`bar`)
+    expect(tasksFinished).toContain(`baz`)
+    expect(tasksErrored).toEqual([])
+    expect(tasksSkipped).toEqual([])
   })
 })

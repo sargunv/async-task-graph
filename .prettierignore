@@ -1,3 +1,4 @@
 LICENSE
 .yarn/
 .pnp.*
+dist/

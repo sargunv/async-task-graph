@@ -1,2 +1,1 @@
-export type { WorkflowDefinition } from "./workflow"
-export { buildSerialWorkflow, taskFnForWorkflow } from "./workflow"
+export { makeWorkflowBuilder } from "./workflow.js"

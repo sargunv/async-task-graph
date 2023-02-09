@@ -1,32 +1,183 @@
 import { Graph } from "graph-data-structure"
+import { z } from "zod"
 
-import { typedEmitter } from "./events"
+import { typedEmitter } from "./events.js"
 
-/**
- * This is a helper type to create a strongly typed workflow definition.
- *
- * You define a workflow as a set of tasks with return types, and provide
- * a type for a context object that is passed to each task when it is run.
- *
- * I was hoping to infer or decentralize the return type definitions, but
- * that just lead to circular type definitions as TypeScript is not able to
- * partially fulfill a generic type to resolve the circular dependency.
- */
-export type WorkflowDefinition<
-  T extends { context: unknown; tasks: Record<string, unknown> } = {
-    context: unknown
-    tasks: Record<string, unknown>
-  },
-> = T
+interface UnknownWorkflowDefinition {
+  context: unknown
+  returns: Record<string, z.ZodType<unknown>>
+}
 
-export type TaskId<W extends WorkflowDefinition> = string & keyof W[`tasks`]
+type UnknownTask<W extends UnknownWorkflowDefinition> = Task<
+  W,
+  TaskId<W>,
+  ValidDeps<W, TaskId<W>>
+>
+
+export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>(
+  definition: W,
+) => {
+  const tasks: Partial<{
+    [Id in TaskId<W>]: Task<W, Id, ValidDeps<W, Id>>
+  }> = {}
+
+  return {
+    addTask: <Id extends TaskId<W>, DepId extends ValidDeps<W, Id>>(
+      task: Task<W, Id, DepId>,
+    ) => {
+      if (tasks[task.id])
+        throw new Error(`Task with id ${task.id} already registered`)
+
+      if (task.dependencies.includes(task.id as any))
+        throw new Error(`Task with id ${task.id} depends on itself`)
+
+      tasks[task.id] = task
+    },
+
+    buildSerialWorkflow: (options: { selectedTasks?: TaskId<W>[] } = {}) => {
+      // we already checked that IDs are correct and unique in addTask
+      // so we only need check lengths for set equality
+      if (
+        Object.keys(tasks).length !== Object.keys(definition.returns).length
+      ) {
+        throw new Error(
+          `Attempted to build workflow without registering all tasks in definition`,
+        )
+      }
+
+      const taskList = Object.values(tasks) as UnknownTask<W>[]
+
+      // sanity check dependencies in case TS was ignored
+      for (const task of taskList) {
+        for (const dep of task.dependencies) {
+          if (!(dep in tasks)) {
+            throw new Error(
+              `Task ${task.id} has unregistered dependency ${dep as string}`,
+            )
+          }
+        }
+      }
+
+      const graph = Graph()
+
+      for (const task of taskList) {
+        graph.addNode(task.id)
+        for (const dep of task.dependencies) {
+          // missing nodes are added implicitly so order doesn't matter
+          graph.addEdge(task.id, dep)
+        }
+      }
+
+      if (graph.hasCycle()) throw new Error(`Task graph has a cycle`)
+
+      // done with validation, now we can return the execution tools
+
+      const taskOrder: TaskId<W>[] = graph
+        .topologicalSort(options.selectedTasks, true)
+        .reverse()
+
+      const taskMap = new Map<TaskId<W>, UnknownTask<W>>(Object.entries(tasks))
+
+      const emitter = typedEmitter<{
+        taskStart: TaskStartArgs<W>
+        taskFinish: TaskFinishArgs<W>
+        taskThrow: TaskThrowArgs<W>
+        taskSkip: TaskSkipArgs<W>
+      }>()
+
+      const runWorkflow = async () => {
+        const validators = new Map<TaskId<W>, z.ZodType<unknown>>(
+          Object.entries(definition.returns),
+        )
+        const taskFinishEvents = new Map<TaskId<W>, TaskFinishArgs<W>>()
+        const tasksSkipped = new Set<TaskId<W>>()
+        const tasksErrored = new Set<TaskId<W>>()
+
+        const getTaskResult = (id: TaskId<W>) => {
+          if (taskFinishEvents.has(id)) {
+            return taskFinishEvents.get(id)!.result
+          } else {
+            // type checker should prevent this
+            throw new Error(
+              `Requested result for task ${id} before it finished.`,
+            )
+          }
+        }
+
+        for (const id of taskOrder) {
+          const erroredDependencies = []
+          const skippedDependencies = []
+
+          for (const dep of taskMap.get(id)!.dependencies) {
+            if (tasksErrored.has(dep)) erroredDependencies.push(dep)
+            else if (tasksSkipped.has(dep)) skippedDependencies.push(dep)
+          }
+
+          if (
+            erroredDependencies.length > 0 ||
+            skippedDependencies.length > 0
+          ) {
+            const event = {
+              id,
+              erroredDependencies,
+              skippedDependencies,
+            }
+            tasksSkipped.add(id)
+            emitter.emit(`taskSkip`, event)
+          } else {
+            emitter.emit(`taskStart`, { id })
+
+            try {
+              const result = await taskMap.get(id)!.run({
+                getTaskResult,
+                context: definition.context,
+              })
+
+              validators.get(id)!.parse(result)
+
+              const event = { id, result }
+              taskFinishEvents.set(id, event)
+              emitter.emit(`taskFinish`, event)
+            } catch (error) {
+              tasksErrored.add(id)
+
+              if (error instanceof Error) {
+                emitter.emit(`taskThrow`, { id, error })
+              } else {
+                emitter.emit(`taskThrow`, {
+                  id,
+                  error: new Error(String(error)),
+                })
+              }
+            }
+          }
+        }
+
+        return {
+          tasksFinished: [...taskFinishEvents.keys()],
+          tasksErrored: [...tasksErrored],
+          tasksSkipped: [...tasksSkipped],
+        }
+      }
+
+      return {
+        taskOrder: [...taskOrder], // copy to prevent mutation
+        emitter,
+        runWorkflow,
+      }
+    },
+  }
+}
+
+export type TaskId<W extends UnknownWorkflowDefinition> = string &
+  keyof W[`returns`]
 
 /**
  * The valid dependencies for a task are all the other ids in the graph, except
  * for the task itself.
  */
 export type ValidDeps<
-  W extends WorkflowDefinition,
+  W extends UnknownWorkflowDefinition,
   Id extends TaskId<W>,
 > = Exclude<TaskId<W>, Id>
 
@@ -34,13 +185,13 @@ export type ValidDeps<
  * A task is an async function that may depend on other tasks in the task graph.
  */
 export interface Task<
-  W extends WorkflowDefinition,
+  W extends UnknownWorkflowDefinition,
   Id extends TaskId<W>,
   DepId extends ValidDeps<W, Id>,
 > {
   id: Id
   dependencies: DepId[]
-  run: (_: TaskRunContext<W, DepId>) => Promise<W[`tasks`][Id]>
+  run: (_: TaskRunContext<W, DepId>) => Promise<z.infer<W[`returns`][Id]>>
 }
 
 /**
@@ -48,37 +199,18 @@ export interface Task<
  * way to get the results of other tasks in the graph.
  */
 export interface TaskRunContext<
-  W extends WorkflowDefinition,
-  DepId extends TaskId<W>,
+  WD extends UnknownWorkflowDefinition,
+  DepId extends TaskId<WD>,
 > {
-  getTaskResult: <D extends DepId>(id: D) => W[`tasks`][D]
-  context: W[`context`]
-}
-
-/**
- * Helper function to return a strongly typed function that helps in writing
- * correct tasks for a given task graph, with strong inferred types.
- */
-export const taskFnForWorkflow =
-  <W extends WorkflowDefinition>() =>
-  <Id extends TaskId<W>, DepId extends ValidDeps<W, Id>>(
-    t: Task<W, Id, DepId>,
-  ) =>
-    t
-
-/**
- * Emitted when a workflow begins execution, right after the task graph is
- * topo-sorted.
- */
-export interface WorkflowStartArgs<W extends WorkflowDefinition> {
-  taskOrder: TaskId<W>[]
+  getTaskResult: <D extends DepId>(id: D) => z.infer<WD[`returns`][D]>
+  context: WD[`context`]
 }
 
 /**
  * Emitted when a task begins execution. Can be emitted multiple times, up to
  * once per task.
  */
-export interface TaskStartArgs<W extends WorkflowDefinition> {
+export interface TaskStartArgs<W extends UnknownWorkflowDefinition> {
   id: TaskId<W>
 }
 
@@ -87,18 +219,18 @@ export interface TaskStartArgs<W extends WorkflowDefinition> {
  * once per task. If a task throws or is skipped, this event will not be emitted.
  */
 export interface TaskFinishArgs<
-  W extends WorkflowDefinition,
+  W extends UnknownWorkflowDefinition,
   Id extends TaskId<W> = TaskId<W>,
 > {
   id: Id
-  result: W[`tasks`][Id]
+  result: z.infer<W[`returns`][Id]>
 }
 
 /**
  * Emitted when a task throws an error. Can be emitted multiple times, up to
  * once per task.
  */
-export interface TaskThrowArgs<W extends WorkflowDefinition> {
+export interface TaskThrowArgs<W extends UnknownWorkflowDefinition> {
   id: TaskId<W>
   error: Error
 }
@@ -107,178 +239,8 @@ export interface TaskThrowArgs<W extends WorkflowDefinition> {
  * Emitted when a task is skipped because its dependencies were skipped or
  * threw errors. Can be emitted multiple times, up to once per task.
  */
-export interface TaskSkipArgs<W extends WorkflowDefinition> {
+export interface TaskSkipArgs<W extends UnknownWorkflowDefinition> {
   id: TaskId<W>
   erroredDependencies: TaskId<W>[]
   skippedDependencies: TaskId<W>[]
-}
-
-/**
- * Emitted when a workflow finishes execution. This event is emitted once.
- */
-export type WorkflowFinishArgs<W extends WorkflowDefinition> = {
-  finishedTasks: TaskFinishArgs<W>[]
-} & (
-  | {
-      erroredTasks: TaskThrowArgs<W>[]
-      skippedTasks: TaskSkipArgs<W>[]
-      completed: false
-    }
-  | { erroredTasks: []; skippedTasks: []; completed: true }
-)
-
-/**
- * This function executes a task graph one task at a time, in topological order.
- * It returns an event emitter than can be used to observe task execution.
- */
-export const buildSerialWorkflow = <W extends WorkflowDefinition>(
-  tasks: { [Id in TaskId<W>]: Task<W, Id, ValidDeps<W, Id>> },
-  context: W[`context`],
-  options: { selectedTasks?: TaskId<W>[] } = {},
-) => {
-  const emitter = typedEmitter<{
-    workflowStart: WorkflowStartArgs<W>
-    taskStart: TaskStartArgs<W>
-    taskFinish: TaskFinishArgs<W>
-    taskThrow: TaskThrowArgs<W>
-    taskSkip: TaskSkipArgs<W>
-    workflowFinish: WorkflowFinishArgs<W>
-    workflowThrow: { error: Error }
-  }>()
-
-  const graph = Graph()
-
-  for (const task of Object.values(tasks) as Task<
-    W,
-    TaskId<W>,
-    ValidDeps<W, TaskId<W>>
-  >[]) {
-    // sanity check in case TS was ignored
-    if (!(task.id in tasks)) {
-      throw new Error(`Task ${task.id} is not in the task registry`)
-    }
-
-    graph.addNode(task.id)
-    for (const dep of task.dependencies) {
-      // sanity check in case TS was ignored
-      if (!(dep in tasks)) {
-        throw new Error(
-          `Task ${task.id} has unknown dependency ${dep as string}`,
-        )
-      }
-
-      // we might add edges before nodes, but this library will add nodes
-      // implicitly when adding edges
-      graph.addEdge(task.id, dep)
-    }
-  }
-
-  if (graph.hasCycle()) {
-    throw new Error(`Task graph has a cycle`)
-  }
-
-  const taskOrder: TaskId<W>[] = graph
-    .topologicalSort(options.selectedTasks, true)
-    .reverse()
-
-  const taskMap = new Map<
-    TaskId<W>,
-    Task<W, TaskId<W>, ValidDeps<W, TaskId<W>>>
-  >(Object.entries(tasks))
-
-  const runWorkflow = () => {
-    emitter.emit(`workflowStart`, { taskOrder })
-
-    const taskFinishEvents = new Map<TaskId<W>, TaskFinishArgs<W>>()
-    const taskSkipEvents = new Map<TaskId<W>, TaskSkipArgs<W>>()
-    const taskThrowEvents = new Map<TaskId<W>, TaskThrowArgs<W>>()
-
-    const getTaskResult = (id: TaskId<W>) => {
-      if (taskFinishEvents.has(id)) {
-        return taskFinishEvents.get(id)!.result
-      } else {
-        // type checker should prevent this
-        throw new Error(`Requested result for task ${id} before it finished.`)
-      }
-    }
-
-    const handleAllTasks = async () => {
-      for (const id of taskOrder) {
-        const erroredDependencies = []
-        const skippedDependencies = []
-
-        for (const dep of taskMap.get(id)!.dependencies) {
-          if (taskThrowEvents.has(dep)) {
-            erroredDependencies.push(dep)
-          } else if (taskSkipEvents.has(dep)) {
-            skippedDependencies.push(dep)
-          }
-        }
-
-        if (erroredDependencies.length > 0 || skippedDependencies.length > 0) {
-          taskSkipEvents.set(id, {
-            id,
-            erroredDependencies,
-            skippedDependencies,
-          })
-          emitter.emit(`taskSkip`, taskSkipEvents.get(id)!)
-        } else {
-          emitter.emit(`taskStart`, { id })
-
-          try {
-            const result = await taskMap.get(id)!.run({
-              // @ts-ignore because we've created a super strict type for a good DX when writing tasks
-              getTaskResult,
-              context,
-            })
-            taskFinishEvents.set(id, { id, result })
-            emitter.emit(`taskFinish`, taskFinishEvents.get(id)!)
-          } catch (error) {
-            if (error instanceof Error) {
-              taskThrowEvents.set(id, { id, error })
-            } else {
-              taskThrowEvents.set(id, { id, error: new Error(String(error)) })
-            }
-            emitter.emit(`taskThrow`, taskThrowEvents.get(id)!)
-          }
-        }
-      }
-    }
-
-    handleAllTasks()
-      .then(() => {
-        const completed =
-          taskSkipEvents.size === 0 && taskThrowEvents.size === 0
-        emitter.emit(
-          `workflowFinish`,
-          // technically a bit redundant but the type checker appreciates it 🥺
-          completed
-            ? {
-                completed,
-                finishedTasks: [...taskFinishEvents.values()],
-                erroredTasks: [],
-                skippedTasks: [],
-              }
-            : {
-                completed,
-                finishedTasks: [...taskFinishEvents.values()],
-                erroredTasks: [...taskThrowEvents.values()],
-                skippedTasks: [...taskSkipEvents.values()],
-              },
-        )
-        return
-      })
-      .catch((error: unknown) => {
-        return error instanceof Error
-          ? emitter.emit(`workflowThrow`, { error })
-          : emitter.emit(`workflowThrow`, {
-              error: new Error(String(error)),
-            })
-      })
-  }
-
-  return {
-    emitter,
-    runWorkflow,
-  }
 }
