@@ -1,11 +1,10 @@
 import { Graph } from "graph-data-structure"
-import { z } from "zod"
 
 import { typedEmitter } from "./events.js"
 
 interface UnknownWorkflowDefinition {
   context: unknown
-  returns: Record<string, z.ZodType<unknown>>
+  returns: Record<string, unknown>
 }
 
 type UnknownTask<W extends UnknownWorkflowDefinition> = Task<
@@ -14,9 +13,12 @@ type UnknownTask<W extends UnknownWorkflowDefinition> = Task<
   ValidDeps<W, TaskId<W>>
 >
 
-export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>(
-  definition: W,
-) => {
+export const makeWorkflowBuilder = <
+  W extends {
+    context: unknown
+    returns: Record<string, unknown>
+  },
+>() => {
   const tasks: Partial<{
     [Id in TaskId<W>]: Task<W, Id, ValidDeps<W, Id>>
   }> = {}
@@ -34,17 +36,10 @@ export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>(
       tasks[task.id] = task
     },
 
-    buildSerialWorkflow: (options: { selectedTasks?: TaskId<W>[] } = {}) => {
-      // we already checked that IDs are correct and unique in addTask
-      // so we only need check lengths for set equality
-      if (
-        Object.keys(tasks).length !== Object.keys(definition.returns).length
-      ) {
-        throw new Error(
-          `Attempted to build workflow without registering all tasks in definition`,
-        )
-      }
-
+    buildSerialWorkflow: (
+      context: W[`context`],
+      options: { selectedTasks?: TaskId<W>[] } = {},
+    ) => {
       const taskList = Object.values(tasks) as UnknownTask<W>[]
 
       // sanity check dependencies in case TS was ignored
@@ -86,9 +81,6 @@ export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>(
       }>()
 
       const runWorkflow = async () => {
-        const validators = new Map<TaskId<W>, z.ZodType<unknown>>(
-          Object.entries(definition.returns),
-        )
         const taskFinishEvents = new Map<TaskId<W>, TaskFinishArgs<W>>()
         const tasksSkipped = new Set<TaskId<W>>()
         const tasksErrored = new Set<TaskId<W>>()
@@ -129,11 +121,10 @@ export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>(
 
             try {
               const result = await taskMap.get(id)!.run({
+                // @ts-expect-error
                 getTaskResult,
-                context: definition.context,
+                context,
               })
-
-              validators.get(id)!.parse(result)
 
               const event = { id, result }
               taskFinishEvents.set(id, event)
@@ -191,7 +182,7 @@ export interface Task<
 > {
   id: Id
   dependencies: DepId[]
-  run: (_: TaskRunContext<W, DepId>) => Promise<z.infer<W[`returns`][Id]>>
+  run: (_: TaskRunContext<W, DepId>) => Promise<W[`returns`][Id]>
 }
 
 /**
@@ -202,7 +193,7 @@ export interface TaskRunContext<
   WD extends UnknownWorkflowDefinition,
   DepId extends TaskId<WD>,
 > {
-  getTaskResult: <D extends DepId>(id: D) => z.infer<WD[`returns`][D]>
+  getTaskResult: <D extends DepId>(id: D) => WD[`returns`][D]
   context: WD[`context`]
 }
 
@@ -223,7 +214,7 @@ export interface TaskFinishArgs<
   Id extends TaskId<W> = TaskId<W>,
 > {
   id: Id
-  result: z.infer<W[`returns`][Id]>
+  result: W[`returns`][Id]
 }
 
 /**

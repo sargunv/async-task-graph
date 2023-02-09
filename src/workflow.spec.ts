@@ -1,18 +1,17 @@
 import { describe, expect, it, vi } from "vitest"
-import { z } from "zod"
 
 import { makeWorkflowBuilder } from "./index.js"
 
 describe(`a linear workflow with no errors`, () => {
   it(`works`, async () => {
-    const wfBuilder = makeWorkflowBuilder({
-      context: { hello: `world` },
+    const wfBuilder = makeWorkflowBuilder<{
+      context: { hello: string }
       returns: {
-        foo: z.string(),
-        bar: z.number(),
-        baz: z.void(),
-      },
-    })
+        foo: string
+        bar: number
+        baz: void
+      }
+    }>()
 
     // we add tasks out of order to test topo-sort later
 
@@ -42,7 +41,7 @@ describe(`a linear workflow with no errors`, () => {
       },
     })
 
-    const workflow = wfBuilder.buildSerialWorkflow()
+    const workflow = wfBuilder.buildSerialWorkflow({ hello: `world` })
 
     expect(workflow.taskOrder).toEqual([`foo`, `bar`, `baz`])
 
