@@ -14,16 +14,15 @@ a focus on strongly typed task definitions.
 ```ts
 import { makeWorkflowBuilder } from "async-task-graph"
 
-const wfBuilder = makeWorkflowBuilder<{
+const builder = makeWorkflowBuilder<{
   context: { hello: string }
   returns: {
     foo: string
     bar: number
-    baz: void
   }
 }>()
 
-wfBuilder.addTask({
+builder.addTask({
   id: `foo`,
   dependencies: [],
   run: ({ context }) => {
@@ -31,7 +30,7 @@ wfBuilder.addTask({
   },
 })
 
-wfBuilder.addTask({
+builder.addTask({
   id: `bar`,
   dependencies: [`foo`],
   run: ({ getTaskResult }) => {
@@ -40,16 +39,7 @@ wfBuilder.addTask({
   },
 })
 
-wfBuilder.addTask({
-  id: `baz`,
-  dependencies: [`bar`],
-  run: ({ getTaskResult }) => {
-    getTaskResult(`bar`)
-    return Promise.resolve()
-  },
-})
-
-const { taskOrder, emitter, runWorkflow } = wfBuilder.buildSerialWorkflow()
+const { emitter, runWorkflow } = builder.buildSerialWorkflow()
 
 emitter.on(`taskFinish`, ({ id, result }) => {
   console.log(`${id} returned ${JSON.stringify(result)}`)
@@ -67,6 +57,5 @@ The above example will output:
 ```txt
 foo returned "{\"hello\":\"world\"}"
 bar returned 17
-baz returned undefined
 done
 ```
