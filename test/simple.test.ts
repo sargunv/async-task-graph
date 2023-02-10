@@ -6,10 +6,7 @@ import { ALL_TASKS, SimpleWorkflow } from "./helpers.js"
 describe(`a linear workflow with no errors`, () => {
   it(`emits the correct events`, async () => {
     const wfBuilder = makeWorkflowBuilder<SimpleWorkflow>()
-
-    // we add tasks out of order to test topo-sort later
     for (const task of ALL_TASKS) wfBuilder.addTask(task)
-
     const workflow = wfBuilder.buildSerialWorkflow()
 
     expect(workflow.taskOrder).toEqual([`fo`, `bar`, `baz`])
