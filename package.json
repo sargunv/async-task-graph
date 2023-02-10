@@ -1,6 +1,6 @@
 {
   "name": "async-task-graph",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Aids in writing asynchronous task graphs with strong typing.",
   "homepage": "https://github.com/sargunv/async-task-graph",
   "repository": {
