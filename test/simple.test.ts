@@ -9,7 +9,7 @@ describe(`a linear workflow with no errors`, () => {
     for (const task of ALL_TASKS) wfBuilder.addTask(task)
     const workflow = wfBuilder.buildSerialWorkflow()
 
-    expect(workflow.taskOrder).toEqual([`fo`, `bar`, `baz`])
+    expect(workflow.taskOrder).toEqual([`foo`, `bar`, `baz`])
 
     const { emitter, runWorkflow } = workflow
 
