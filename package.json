@@ -55,6 +55,9 @@
     "vitest": "^0.28.4"
   },
   "packageManager": "yarn@4.0.0-rc.38",
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "languageName": "node",
   "publishConfig": {
     "access": "public"
