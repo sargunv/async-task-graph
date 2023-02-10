@@ -19,9 +19,10 @@
     "configure": "yarn dlx @yarnpkg/sdks vscode && ignore-sync .",
     "fix": "eslint . --fix && prettier --write .",
     "lint": "eslint . && prettier --check . --loglevel warn",
-    "prepack": "run build",
+    "prepack": "run build && run test-docs",
     "prepublish": "run lint && run test",
-    "test": "vitest --run && vitest typecheck --run"
+    "test": "vitest --run && vitest typecheck --run",
+    "test-docs": "txm README.md"
   },
   "prettier": "@sargunv/prettier-config",
   "eslintConfig": {
@@ -48,6 +49,7 @@
     "eslint": "^8.33.0",
     "ignore-sync": "^6.0.2",
     "prettier": "^2.8.4",
+    "txm": "^8.1.0",
     "typescript": "^4.9.5",
     "vite": "^4.1.1",
     "vitest": "^0.28.4"

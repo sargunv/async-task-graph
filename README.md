@@ -7,8 +7,14 @@ a focus on strongly typed task definitions.
 
 ## Usage
 
+<!-- !test program yarn dlx -q ts-node -T -->
+
+<!-- !test in usage -->
+
 ```ts
-export type SimpleWorkflow = WorkflowDefinition<{
+import { makeWorkflowBuilder, WorkflowDefinition } from "async-task-graph"
+
+type SimpleWorkflow = WorkflowDefinition<{
   context: { hello: string }
   returns: {
     foo: string
@@ -17,9 +23,9 @@ export type SimpleWorkflow = WorkflowDefinition<{
   }
 }>
 
-export const newSimpleTask = makeTaskFunction<SimpleWorkflow>()
+const wfBuilder = makeWorkflowBuilder<SimpleWorkflow>()
 
-export const fooTask = newSimpleTask({
+wfBuilder.addTask({
   id: `foo`,
   dependencies: [],
   run: ({ context }) => {
@@ -27,7 +33,7 @@ export const fooTask = newSimpleTask({
   },
 })
 
-export const barTask = newSimpleTask({
+wfBuilder.addTask({
   id: `bar`,
   dependencies: [`foo`],
   run: ({ getTaskResult }) => {
@@ -36,7 +42,7 @@ export const barTask = newSimpleTask({
   },
 })
 
-export const bazTask = newSimpleTask({
+wfBuilder.addTask({
   id: `baz`,
   dependencies: [`bar`],
   run: ({ getTaskResult }) => {
@@ -45,44 +51,24 @@ export const bazTask = newSimpleTask({
   },
 })
 
-const wfBuilder = makeWorkflowBuilder<SimpleWorkflow>()
-
-wfBuilder.addTask(fooTask)
-wfBuilder.addTask(barTask)
-wfBuilder.addTask(bazTask)
-
 const { taskOrder, emitter, runWorkflow } = wfBuilder.buildSerialWorkflow()
 
-emitter.on(`workflowStart`, ({ taskOrder, context }) => {
-  console.log(`workflowStart: ${taskOrder}: ${JSON.stringify(context)}`)
-})
-
-emitter.on(`taskStart`, ({ id }) => {
-  console.log(`taskStart: ${id}`)
-})
-
 emitter.on(`taskFinish`, ({ id, result }) => {
-  console.log(`taskFinish: ${id}: ${JSON.stringify(result)}`)
+  console.log(`${id} returned ${JSON.stringify(result)}`)
 })
 
-emitter.on(`taskThrow`, ({ id, error }) => {
-  console.log(`taskThrow: ${id}: ${error.message}`)
+runWorkflow({ hello: `world` }).then(() => {
+  console.log(`done`)
 })
+```
 
-emitter.on(`taskSkip`, ({ id, erroredDependencies, skippedDependencies }) => {
-  console.log(
-    `taskSkip: ${id} because of ${erroredDependencies} and ${skippedDependencies}`,
-  )
-})
+The above example will output:
 
-emitter.on(`workflowFinish`, ({ id, result }) => {
-  console.log(`taskStart: ${id}`)
-})
+<!-- !test out usage -->
 
-const context = { hello: `world` }
-const { tasksFinished, tasksErrored, tasksSkipped } = await runWorkflow(context)
-
-console.log(`tasksFinished: ${tasksFinished}`)
-console.log(`tasksErrored: ${tasksErrored}`)
-console.log(`tasksSkipped: ${tasksSkipped}`)
+```txt
+foo returned "{\"hello\":\"world\"}"
+bar returned 17
+baz returned undefined
+done
 ```
