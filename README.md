@@ -7,7 +7,7 @@ a focus on strongly typed task definitions.
 
 ## Usage
 
-<!-- !test program yarn dlx -q ts-node -->
+<!-- !test program yarn dlx -q ts-node -I '.*' -->
 
 <!-- !test in usage -->
 
