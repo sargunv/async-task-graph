@@ -21,7 +21,7 @@
     "lint": "eslint . && prettier --check . --loglevel warn",
     "prepack": "run build",
     "prepublish": "run lint && run test",
-    "test": "vitest --run"
+    "test": "vitest --run && vitest typecheck --run"
   },
   "prettier": "@sargunv/prettier-config",
   "eslintConfig": {

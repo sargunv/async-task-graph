@@ -1,64 +1,12 @@
 import { describe, expect, it, vi } from "vitest"
 
-import {
-  makeWorkflowBuilder,
-  type TaskFor,
-  type WorkflowDefinition,
-} from "../src/index.js"
-
-type SimpleWorkflow = WorkflowDefinition<{
-  context: { hello: string }
-  returns: {
-    foo: string
-    bar: number
-    baz: void
-  }
-}>
-
-type SimpleTask = TaskFor<SimpleWorkflow>
-
-const fooTask: SimpleTask = {
-  id: `foo`,
-  dependencies: [],
-  run: ({ context }) => {
-    return Promise.resolve(JSON.stringify(context))
-  },
-}
-
-const barTask: SimpleTask = {
-  id: `bar`,
-  dependencies: [`foo`],
-  run({ getTaskResult }) {
-    const str = getTaskResult(`foo`)
-    return Promise.resolve(str.length)
-  },
-}
-
-const bazTask: SimpleTask = {
-  id: `baz`,
-  dependencies: [`bar`],
-  run({ getTaskResult }) {
-    getTaskResult(`bar`)
-    return Promise.resolve()
-  },
-}
-
-// we add tasks out of order to test topo-sort later
-const ALL_TASKS = [barTask, fooTask, bazTask]
+import { makeWorkflowBuilder } from "../src/index.js"
+import { ALL_TASKS, SimpleWorkflow } from "./helpers.js"
 
 describe(`a linear workflow with no errors`, () => {
   it(`emits the correct events`, async () => {
-    const wfBuilder = makeWorkflowBuilder<{
-      context: { hello: string }
-      returns: {
-        foo: string
-        bar: number
-        baz: void
-      }
-    }>()
-
+    const wfBuilder = makeWorkflowBuilder<SimpleWorkflow>()
     for (const task of ALL_TASKS) wfBuilder.addTask(task)
-
     const workflow = wfBuilder.buildSerialWorkflow()
 
     expect(workflow.taskOrder).toEqual([`foo`, `bar`, `baz`])

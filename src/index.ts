@@ -1,5 +1,5 @@
 export {
+  makeTaskFunction,
   makeWorkflowBuilder,
-  type TaskFor,
   type WorkflowDefinition,
 } from "./workflow.js"
