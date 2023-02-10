@@ -9,11 +9,12 @@ interface UnknownWorkflowDefinition {
 
 export type WorkflowDefinition<W extends UnknownWorkflowDefinition> = W
 
-export type TaskFor<W extends UnknownWorkflowDefinition> = Task<
-  W,
-  TaskId<W>,
-  TaskId<W>
->
+export const makeTaskFunction =
+  <W extends UnknownWorkflowDefinition>() =>
+  <Id extends TaskId<W>, DepId extends Exclude<TaskId<W>, Id>>(
+    task: Task<W, Id, DepId>,
+  ) =>
+    task
 
 export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>() => {
   const tasks: Partial<{
@@ -163,6 +164,12 @@ export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>() => {
     },
   }
 }
+
+type TaskFor<W extends UnknownWorkflowDefinition> = Task<
+  W,
+  TaskId<W>,
+  TaskId<W>
+>
 
 type TaskId<W extends UnknownWorkflowDefinition> = string & keyof W[`returns`]
 

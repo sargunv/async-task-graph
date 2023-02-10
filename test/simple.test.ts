@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest"
 
 import {
+  makeTaskFunction,
   makeWorkflowBuilder,
-  type TaskFor,
   type WorkflowDefinition,
 } from "../src/index.js"
 
@@ -15,33 +15,33 @@ type SimpleWorkflow = WorkflowDefinition<{
   }
 }>
 
-type SimpleTask = TaskFor<SimpleWorkflow>
+const newSimpleTask = makeTaskFunction<SimpleWorkflow>()
 
-const fooTask: SimpleTask = {
+const fooTask = newSimpleTask({
   id: `foo`,
   dependencies: [],
   run: ({ context }) => {
     return Promise.resolve(JSON.stringify(context))
   },
-}
+})
 
-const barTask: SimpleTask = {
+const barTask = newSimpleTask({
   id: `bar`,
   dependencies: [`foo`],
-  run({ getTaskResult }) {
+  run: ({ getTaskResult }) => {
     const str = getTaskResult(`foo`)
     return Promise.resolve(str.length)
   },
-}
+})
 
-const bazTask: SimpleTask = {
+const bazTask = newSimpleTask({
   id: `baz`,
   dependencies: [`bar`],
-  run({ getTaskResult }) {
+  run: ({ getTaskResult }) => {
     getTaskResult(`bar`)
     return Promise.resolve()
   },
-}
+})
 
 // we add tasks out of order to test topo-sort later
 const ALL_TASKS = [barTask, fooTask, bazTask]
