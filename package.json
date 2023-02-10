@@ -50,11 +50,7 @@
     "prettier": "^2.8.4",
     "typescript": "^4.9.5",
     "vite": "^4.1.1",
-    "vitest": "^0.28.4",
-    "zod": "^3.20.5"
-  },
-  "peerDependencies": {
-    "zod": "^3"
+    "vitest": "^0.28.4"
   },
   "packageManager": "yarn@4.0.0-rc.38",
   "languageName": "node",

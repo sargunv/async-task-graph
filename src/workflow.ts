@@ -1,28 +1,27 @@
 import { Graph } from "graph-data-structure"
-import { z } from "zod"
 
 import { typedEmitter } from "./events.js"
 
 interface UnknownWorkflowDefinition {
   context: unknown
-  returns: Record<string, z.ZodType<unknown>>
+  returns: Record<string, unknown>
 }
 
-type UnknownTask<W extends UnknownWorkflowDefinition> = Task<
+export type WorkflowDefinition<W extends UnknownWorkflowDefinition> = W
+
+export type TaskFor<W extends UnknownWorkflowDefinition> = Task<
   W,
   TaskId<W>,
-  ValidDeps<W, TaskId<W>>
+  TaskId<W>
 >
 
-export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>(
-  definition: W,
-) => {
+export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>() => {
   const tasks: Partial<{
-    [Id in TaskId<W>]: Task<W, Id, ValidDeps<W, Id>>
+    [Id in TaskId<W>]: Task<W, Id, TaskId<W>>
   }> = {}
 
   return {
-    addTask: <Id extends TaskId<W>, DepId extends ValidDeps<W, Id>>(
+    addTask: <Id extends TaskId<W>, DepId extends TaskId<W>>(
       task: Task<W, Id, DepId>,
     ) => {
       if (tasks[task.id])
@@ -35,28 +34,21 @@ export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>(
     },
 
     buildSerialWorkflow: (options: { selectedTasks?: TaskId<W>[] } = {}) => {
-      // we already checked that IDs are correct and unique in addTask
-      // so we only need check lengths for set equality
-      if (
-        Object.keys(tasks).length !== Object.keys(definition.returns).length
-      ) {
-        throw new Error(
-          `Attempted to build workflow without registering all tasks in definition`,
-        )
-      }
-
-      const taskList = Object.values(tasks) as UnknownTask<W>[]
+      // type cast: assume all tasks are registered
+      const taskList = Object.values(tasks) as TaskFor<W>[]
 
       // sanity check dependencies in case TS was ignored
       for (const task of taskList) {
         for (const dep of task.dependencies) {
           if (!(dep in tasks)) {
             throw new Error(
-              `Task ${task.id} has unregistered dependency ${dep as string}`,
+              `Task ${task.id} has unregistered dependency ${dep}`,
             )
           }
         }
       }
+
+      // construct a graph so we can detect cycles and topo-sort
 
       const graph = Graph()
 
@@ -70,25 +62,26 @@ export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>(
 
       if (graph.hasCycle()) throw new Error(`Task graph has a cycle`)
 
-      // done with validation, now we can return the execution tools
-
       const taskOrder: TaskId<W>[] = graph
         .topologicalSort(options.selectedTasks, true)
         .reverse()
 
-      const taskMap = new Map<TaskId<W>, UnknownTask<W>>(Object.entries(tasks))
+      // done with validation, now we can return the execution tools
+
+      const taskMap = new Map(Object.entries(tasks))
 
       const emitter = typedEmitter<{
+        workflowStart: WorkflowStartArgs<W>
         taskStart: TaskStartArgs<W>
         taskFinish: TaskFinishArgs<W>
         taskThrow: TaskThrowArgs<W>
         taskSkip: TaskSkipArgs<W>
+        workflowFinish: WorkflowFinishArgs<W>
       }>()
 
-      const runWorkflow = async () => {
-        const validators = new Map<TaskId<W>, z.ZodType<unknown>>(
-          Object.entries(definition.returns),
-        )
+      const runWorkflow = async (context: W[`context`]) => {
+        emitter.emit(`workflowStart`, { taskOrder, context })
+
         const taskFinishEvents = new Map<TaskId<W>, TaskFinishArgs<W>>()
         const tasksSkipped = new Set<TaskId<W>>()
         const tasksErrored = new Set<TaskId<W>>()
@@ -99,7 +92,7 @@ export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>(
           } else {
             // type checker should prevent this
             throw new Error(
-              `Requested result for task ${id} before it finished.`,
+              `Requested result for task ${id} before it finished`,
             )
           }
         }
@@ -129,11 +122,10 @@ export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>(
 
             try {
               const result = await taskMap.get(id)!.run({
+                // @ts-expect-error
                 getTaskResult,
-                context: definition.context,
+                context,
               })
-
-              validators.get(id)!.parse(result)
 
               const event = { id, result }
               taskFinishEvents.set(id, event)
@@ -153,15 +145,18 @@ export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>(
           }
         }
 
-        return {
+        const ret = {
           tasksFinished: [...taskFinishEvents.keys()],
           tasksErrored: [...tasksErrored],
           tasksSkipped: [...tasksSkipped],
         }
+
+        emitter.emit(`workflowFinish`, ret)
+        return ret
       }
 
       return {
-        taskOrder: [...taskOrder], // copy to prevent mutation
+        taskOrder,
         emitter,
         runWorkflow,
       }
@@ -169,40 +164,27 @@ export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>(
   }
 }
 
-export type TaskId<W extends UnknownWorkflowDefinition> = string &
-  keyof W[`returns`]
+type TaskId<W extends UnknownWorkflowDefinition> = string & keyof W[`returns`]
 
-/**
- * The valid dependencies for a task are all the other ids in the graph, except
- * for the task itself.
- */
-export type ValidDeps<
+interface Task<
   W extends UnknownWorkflowDefinition,
   Id extends TaskId<W>,
-> = Exclude<TaskId<W>, Id>
-
-/**
- * A task is an async function that may depend on other tasks in the task graph.
- */
-export interface Task<
-  W extends UnknownWorkflowDefinition,
-  Id extends TaskId<W>,
-  DepId extends ValidDeps<W, Id>,
+  DepId extends TaskId<W>,
 > {
   id: Id
   dependencies: DepId[]
-  run: (_: TaskRunContext<W, DepId>) => Promise<z.infer<W[`returns`][Id]>>
+  run: (_: TaskRunContext<W, DepId>) => Promise<W[`returns`][Id]>
 }
 
 /**
  * The workflow-related context passed to a task when it is run. It provides a
  * way to get the results of other tasks in the graph.
  */
-export interface TaskRunContext<
+interface TaskRunContext<
   WD extends UnknownWorkflowDefinition,
   DepId extends TaskId<WD>,
 > {
-  getTaskResult: <D extends DepId>(id: D) => z.infer<WD[`returns`][D]>
+  getTaskResult: <D extends DepId>(id: D) => WD[`returns`][D]
   context: WD[`context`]
 }
 
@@ -210,7 +192,7 @@ export interface TaskRunContext<
  * Emitted when a task begins execution. Can be emitted multiple times, up to
  * once per task.
  */
-export interface TaskStartArgs<W extends UnknownWorkflowDefinition> {
+interface TaskStartArgs<W extends UnknownWorkflowDefinition> {
   id: TaskId<W>
 }
 
@@ -218,19 +200,19 @@ export interface TaskStartArgs<W extends UnknownWorkflowDefinition> {
  * Emitted when a task finishes execution. Can be emitted multiple times, up to
  * once per task. If a task throws or is skipped, this event will not be emitted.
  */
-export interface TaskFinishArgs<
+interface TaskFinishArgs<
   W extends UnknownWorkflowDefinition,
   Id extends TaskId<W> = TaskId<W>,
 > {
   id: Id
-  result: z.infer<W[`returns`][Id]>
+  result: W[`returns`][Id]
 }
 
 /**
  * Emitted when a task throws an error. Can be emitted multiple times, up to
  * once per task.
  */
-export interface TaskThrowArgs<W extends UnknownWorkflowDefinition> {
+interface TaskThrowArgs<W extends UnknownWorkflowDefinition> {
   id: TaskId<W>
   error: Error
 }
@@ -239,8 +221,25 @@ export interface TaskThrowArgs<W extends UnknownWorkflowDefinition> {
  * Emitted when a task is skipped because its dependencies were skipped or
  * threw errors. Can be emitted multiple times, up to once per task.
  */
-export interface TaskSkipArgs<W extends UnknownWorkflowDefinition> {
+interface TaskSkipArgs<W extends UnknownWorkflowDefinition> {
   id: TaskId<W>
   erroredDependencies: TaskId<W>[]
   skippedDependencies: TaskId<W>[]
+}
+
+/**
+ * Emitted when a workflow begins execution. Can be emitted only once.
+ */
+interface WorkflowStartArgs<W extends UnknownWorkflowDefinition> {
+  context: W[`context`]
+  taskOrder: TaskId<W>[]
+}
+
+/**
+ * Emitted when a workflow finishes execution. Can be emitted only once.
+ */
+interface WorkflowFinishArgs<W extends UnknownWorkflowDefinition> {
+  tasksFinished: TaskId<W>[]
+  tasksErrored: TaskId<W>[]
+  tasksSkipped: TaskId<W>[]
 }

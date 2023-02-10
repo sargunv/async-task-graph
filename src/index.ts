@@ -1,1 +1,5 @@
-export { makeWorkflowBuilder } from "./workflow.js"
+export {
+  makeWorkflowBuilder,
+  type TaskFor,
+  type WorkflowDefinition,
+} from "./workflow.js"
