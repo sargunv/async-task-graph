@@ -7,23 +7,21 @@ a focus on strongly typed task definitions.
 
 ## Usage
 
-<!-- !test program yarn dlx -q ts-node -T -->
+<!-- !test program yarn dlx -q ts-node -->
 
 <!-- !test in usage -->
 
 ```ts
-import { makeWorkflowBuilder, WorkflowDefinition } from "async-task-graph"
+import { makeWorkflowBuilder } from "async-task-graph"
 
-type SimpleWorkflow = WorkflowDefinition<{
+const wfBuilder = makeWorkflowBuilder<{
   context: { hello: string }
   returns: {
     foo: string
     bar: number
     baz: void
   }
-}>
-
-const wfBuilder = makeWorkflowBuilder<SimpleWorkflow>()
+}>()
 
 wfBuilder.addTask({
   id: `foo`,
