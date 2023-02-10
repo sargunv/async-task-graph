@@ -18,6 +18,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: yarn
       - run: yarn install --immutable
       - run: yarn version -i '${{ github.event.inputs.version }}'
       - run: yarn npm publish
