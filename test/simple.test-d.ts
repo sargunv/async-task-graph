@@ -58,6 +58,15 @@ describe(`a simple workflow definition`, () => {
     })
   })
 
+  it(`disallows tasks returning the incorrect type`, () => {
+    newSimpleTask({
+      id: `foo`,
+      dependencies: [],
+      // @ts-expect-error
+      run: () => Promise.resolve(1),
+    })
+  })
+
   it(`disallows requesting the result of a non-dependency`, () => {
     newSimpleTask({
       id: `foo`,
