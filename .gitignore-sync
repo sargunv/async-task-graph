@@ -1,2 +1,5 @@
 [github/gitignore]
 Node.gitignore
+
+[inline]
+tsconfig.vitest-temp.json

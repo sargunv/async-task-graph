@@ -173,7 +173,8 @@ type TaskFor<W extends UnknownWorkflowDefinition> = Task<
 
 type TaskId<W extends UnknownWorkflowDefinition> = string & keyof W[`returns`]
 
-interface Task<
+// TS says this needs to be exported because it's named in the type of makeTaskFunction
+export interface Task<
   W extends UnknownWorkflowDefinition,
   Id extends TaskId<W>,
   DepId extends TaskId<W>,
