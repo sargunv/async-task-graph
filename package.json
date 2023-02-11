@@ -3,10 +3,7 @@
   "version": "0.4.1",
   "description": "Aids in writing asynchronous task graphs with strong typing.",
   "homepage": "https://github.com/sargunv/async-task-graph",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/sargunv/async-task-graph.git"
-  },
+  "repository": "github:sargunv/async-task-graph",
   "license": "Apache-2.0",
   "type": "commonjs",
   "main": "dist/index.js",
