@@ -2,3 +2,4 @@ LICENSE
 .yarn/
 .pnp.*
 dist/
+tsconfig.vitest-temp.json

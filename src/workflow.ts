@@ -6,10 +6,9 @@ import type {
   TaskId,
   UnknownWorkflowDefinition,
 } from "./core-types.js"
-import { EventEmitter, EventSink, typedEmitter } from "./event-emitter.js"
+import { EventSink, typedEmitter } from "./event-emitter.js"
 import {
   TaskEvents,
-  TaskFinishArgs,
   WorkflowFinishArgs,
   WorkflowStartArgs,
 } from "./event-types.js"
