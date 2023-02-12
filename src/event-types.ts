@@ -55,3 +55,10 @@ export interface WorkflowFinishArgs<W extends UnknownWorkflowDefinition> {
   tasksErrored: TaskId<W>[]
   tasksSkipped: TaskId<W>[]
 }
+
+export interface TaskEvents<W extends UnknownWorkflowDefinition> {
+  taskStart: TaskStartArgs<W>
+  taskFinish: TaskFinishArgs<W>
+  taskThrow: TaskThrowArgs<W>
+  taskSkip: TaskSkipArgs<W>
+}
