@@ -26,7 +26,7 @@ export const validateTaskGraph = <W extends UnknownWorkflowDefinition>(
     .topologicalSort(selectedTasks, true)
     .reverse()
 
-  // we validate after toposort so we only need to register the subgraph
+  // we only validate the selected subgraph
   for (const id of taskOrder)
     if (!tasks.has(id)) throw new Error(`Task ${id} is not registered`)
 

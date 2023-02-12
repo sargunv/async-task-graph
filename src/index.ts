@@ -1,6 +1,6 @@
 import { Task, TaskId, UnknownWorkflowDefinition } from "./core-types.js"
 
-export { makeWorkflowBuilder } from "./workflow.js"
+export { workflowBuilder } from "./workflow.js"
 
 export type WorkflowDefinition<W extends UnknownWorkflowDefinition> = W
 

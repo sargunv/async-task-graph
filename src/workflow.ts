@@ -14,7 +14,7 @@ type TaskRegistry<W extends UnknownWorkflowDefinition> = {
   [Id in TaskId<W>]: Task<W, Id, TaskId<W>>
 }
 
-export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>() => {
+export const workflowBuilder = <W extends UnknownWorkflowDefinition>() => {
   const registry: Partial<TaskRegistry<W>> = {}
 
   return {
@@ -30,7 +30,7 @@ export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>() => {
       registry[task.id] = task
     },
 
-    buildSerialWorkflow: (
+    serialWorkflow: (
       options?: Parameters<typeof serialWorkflow>[1],
     ): Workflow<W> => {
       return serialWorkflow(
@@ -62,7 +62,7 @@ const serialWorkflow = <W extends UnknownWorkflowDefinition>(
 
       for (const dep of tasks.get(id)!.dependencies) {
         if (tracker.isErrored(dep)) erroredDependencies.push(dep)
-        else if (tracker.isSkipped(dep)) skippedDependencies.push(dep)
+        if (tracker.isSkipped(dep)) skippedDependencies.push(dep)
       }
 
       if (erroredDependencies.length > 0 || skippedDependencies.length > 0) {

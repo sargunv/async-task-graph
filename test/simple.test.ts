@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 
-import { makeWorkflowBuilder } from "../src/index.js"
+import { workflowBuilder } from "../src/index.js"
 import {
   ALL_TASKS,
   badBarTask,
@@ -22,9 +22,9 @@ describe(`a linear workflow with no errors`, () => {
     { tasks: [bazTask, fooTask, barTask] },
     { tasks: [bazTask, barTask, fooTask] },
   ])(`topo-sorts the tasks before execution (input %#)`, ({ tasks }) => {
-    const wfBuilder = makeWorkflowBuilder<SimpleWorkflow>()
+    const wfBuilder = workflowBuilder<SimpleWorkflow>()
     for (const task of tasks) wfBuilder.addTask(task)
-    const { taskOrder } = wfBuilder.buildSerialWorkflow()
+    const { taskOrder } = wfBuilder.serialWorkflow()
     expect(taskOrder).toEqual([`foo`, `bar`, `baz`])
   })
 
@@ -188,10 +188,10 @@ describe(`a linear workflow with no errors`, () => {
       workflowFinishEvent,
       selectedTasks,
     }) => {
-      const wfBuilder = makeWorkflowBuilder<SimpleWorkflow>()
+      const wfBuilder = workflowBuilder<SimpleWorkflow>()
       for (const task of tasks) wfBuilder.addTask(task)
 
-      const { emitter, run, taskOrder } = wfBuilder.buildSerialWorkflow({
+      const { emitter, run, taskOrder } = wfBuilder.serialWorkflow({
         selectedTasks: selectedTasks as SimpleTaskId[] | undefined,
       })
 
