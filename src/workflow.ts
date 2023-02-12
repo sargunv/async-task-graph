@@ -16,20 +16,23 @@ import {
   WorkflowStartArgs,
 } from "./event-types.js"
 
-type TaskRegistry<W extends UnknownWorkflowDefinition> = Partial<{
+type CompleteRegistry<W extends UnknownWorkflowDefinition> = {
   [Id in TaskId<W>]: Task<W, Id, TaskId<W>>
-}>
+}
+
+type TaskRegistry<W extends UnknownWorkflowDefinition> = Partial<
+  CompleteRegistry<W>
+>
 
 const buildSerialWorkflow =
-  <W extends UnknownWorkflowDefinition>(tasks: TaskRegistry<W>) =>
+  <W extends UnknownWorkflowDefinition>(taskRegistry: TaskRegistry<W>) =>
   (options: { selectedTasks?: TaskId<W>[] } = {}) => {
-    // type cast: assume all tasks are registered
-    const taskList = Object.values(tasks) as TaskFor<W>[]
+    const taskMap = new Map(Object.entries(taskRegistry as CompleteRegistry<W>))
 
     // sanity check dependencies in case TS was ignored
-    for (const task of taskList) {
+    for (const task of taskMap.values()) {
       for (const dep of task.dependencies) {
-        if (!(dep in tasks))
+        if (!taskMap.has(dep))
           throw new Error(`Task ${task.id} has unregistered dependency ${dep}`)
       }
     }
@@ -38,7 +41,7 @@ const buildSerialWorkflow =
 
     const graph = Graph()
 
-    for (const task of taskList) {
+    for (const task of taskMap.values()) {
       graph.addNode(task.id)
       for (const dep of task.dependencies) {
         // missing nodes are added implicitly so order doesn't matter
@@ -53,8 +56,6 @@ const buildSerialWorkflow =
       .reverse()
 
     // done with validation, now we can return the execution tools
-
-    const taskMap = new Map(Object.entries(tasks))
 
     const emitter = typedEmitter<{
       workflowStart: WorkflowStartArgs<W>
@@ -144,20 +145,21 @@ const buildSerialWorkflow =
   }
 
 export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>() => {
-  const tasks: TaskRegistry<W> = {}
+  const registry: TaskRegistry<W> = {}
+
   return {
     addTask: <Id extends TaskId<W>, DepId extends TaskId<W>>(
       task: Task<W, Id, DepId>,
     ) => {
-      if (tasks[task.id])
+      if (registry[task.id])
         throw new Error(`Task with id ${task.id} registered twice`)
 
       if ((task.dependencies as string[]).includes(task.id))
         throw new Error(`Task with id ${task.id} depends on itself`)
 
-      tasks[task.id] = task
+      registry[task.id] = task
     },
 
-    buildSerialWorkflow: buildSerialWorkflow(tasks),
+    buildSerialWorkflow: buildSerialWorkflow(registry),
   }
 }
