@@ -1,4 +1,8 @@
-import type { TaskId, UnknownWorkflowDefinition } from "./core-types.js"
+import type {
+  TaskId,
+  TaskResult,
+  UnknownWorkflowDefinition,
+} from "./core-types.js"
 
 /**
  * Emitted when a task begins execution. Can be emitted multiple times, up to
@@ -17,7 +21,7 @@ export interface TaskFinishArgs<
   Id extends TaskId<W> = TaskId<W>,
 > {
   id: Id
-  result: W[`returns`][Id]
+  result: TaskResult<W, Id>
 }
 
 /**
@@ -61,4 +65,10 @@ export interface TaskEvents<W extends UnknownWorkflowDefinition> {
   taskFinish: TaskFinishArgs<W>
   taskThrow: TaskThrowArgs<W>
   taskSkip: TaskSkipArgs<W>
+}
+
+export interface WorkflowEvents<W extends UnknownWorkflowDefinition>
+  extends TaskEvents<W> {
+  workflowStart: WorkflowStartArgs<W>
+  workflowFinish: WorkflowFinishArgs<W>
 }

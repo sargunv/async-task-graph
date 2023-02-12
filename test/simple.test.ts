@@ -191,11 +191,9 @@ describe(`a linear workflow with no errors`, () => {
       const wfBuilder = makeWorkflowBuilder<SimpleWorkflow>()
       for (const task of tasks) wfBuilder.addTask(task)
 
-      const { emitter, runWorkflow, taskOrder } = wfBuilder.buildSerialWorkflow(
-        {
-          selectedTasks: selectedTasks as SimpleTaskId[] | undefined,
-        },
-      )
+      const { emitter, run, taskOrder } = wfBuilder.buildSerialWorkflow({
+        selectedTasks: selectedTasks as SimpleTaskId[] | undefined,
+      })
 
       expect(taskOrder).toEqual(workflowStartEvent.taskOrder)
 
@@ -213,7 +211,7 @@ describe(`a linear workflow with no errors`, () => {
       emitter.on(`taskSkip`, taskSkipFn)
       emitter.on(`workflowFinish`, workflowFinishFn)
 
-      const result = await runWorkflow(context)
+      const result = await run(context)
 
       expect(workflowStartFn).toHaveBeenCalledOnce()
       expect(workflowStartFn).toHaveBeenCalledWith(workflowStartEvent)

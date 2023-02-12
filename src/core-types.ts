@@ -1,3 +1,6 @@
+import type { EventSource } from "./event-emitter.js"
+import type { WorkflowEvents, WorkflowFinishArgs } from "./event-types.js"
+
 export interface UnknownWorkflowDefinition {
   context: unknown
   returns: Record<string, unknown>
@@ -12,6 +15,11 @@ export type TaskFor<W extends UnknownWorkflowDefinition> = Task<
 export type TaskId<W extends UnknownWorkflowDefinition> = string &
   keyof W[`returns`]
 
+export type TaskResult<
+  W extends UnknownWorkflowDefinition,
+  Id extends TaskId<W> = TaskId<W>,
+> = W[`returns`][Id]
+
 export interface Task<
   W extends UnknownWorkflowDefinition,
   Id extends TaskId<W>,
@@ -19,13 +27,19 @@ export interface Task<
 > {
   id: Id
   dependencies: DepId[]
-  run: (_: TaskRunContext<W, DepId>) => Promise<W[`returns`][Id]>
+  run: (_: TaskRunContext<W, DepId>) => Promise<TaskResult<W, Id>>
 }
 
 export interface TaskRunContext<
-  WD extends UnknownWorkflowDefinition,
-  DepId extends TaskId<WD>,
+  W extends UnknownWorkflowDefinition,
+  DepId extends TaskId<W>,
 > {
-  getTaskResult: <D extends DepId>(id: D) => WD[`returns`][D]
-  context: WD[`context`]
+  getTaskResult: <D extends DepId>(id: D) => TaskResult<W, D>
+  context: W[`context`]
+}
+
+export interface Workflow<W extends UnknownWorkflowDefinition> {
+  taskOrder: TaskId<W>[]
+  emitter: EventSource<WorkflowEvents<W>>
+  run: (context: W[`context`]) => Promise<WorkflowFinishArgs<W>>
 }
