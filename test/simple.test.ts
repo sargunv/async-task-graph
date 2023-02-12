@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 
-import { makeWorkflowBuilder } from "../../src/index.js"
+import { makeWorkflowBuilder } from "../src/index.js"
 import {
   ALL_TASKS,
   badBarTask,
@@ -11,7 +11,7 @@ import {
   fooTask,
   SimpleTaskId,
   SimpleWorkflow,
-} from "../helpers/simple.js"
+} from "./helpers/simple.js"
 
 describe(`a linear workflow with no errors`, () => {
   it.each([
