@@ -7,37 +7,28 @@ import type {
 } from "./core-types.js"
 import { typedEmitter } from "./event-emitter.js"
 import type { WorkflowEvents } from "./event-types.js"
-import { runTask } from "./task.js"
+import { runTask } from "./run-task.js"
 import { validateTaskGraph } from "./task-graph.js"
 import { taskTracker } from "./task-tracker.js"
 
-type TaskRegistry<W extends UnknownWorkflowDefinition> = {
-  [Id in TaskId<W>]: Task<W, Id, TaskId<W>>
-}
-
 export const workflowBuilder = <W extends UnknownWorkflowDefinition>() => {
-  const registry: Partial<TaskRegistry<W>> = {}
+  const registry = new Map<TaskId<W>, TaskFor<W>>()
 
   return {
     addTask: <Id extends TaskId<W>, DepId extends TaskId<W>>(
       task: Task<W, Id, DepId>,
     ) => {
-      if (registry[task.id])
+      if (registry.has(task.id))
         throw new Error(`Task with id ${task.id} registered twice`)
-
       if ((task.dependencies as string[]).includes(task.id))
         throw new Error(`Task with id ${task.id} depends on itself`)
-
-      registry[task.id] = task
+      registry.set(task.id, task)
     },
 
     serialWorkflow: (
       options?: Parameters<typeof serialWorkflow>[1],
     ): Workflow<W> => {
-      return serialWorkflow(
-        new Map(Object.entries(registry as TaskRegistry<W>)),
-        options,
-      )
+      return serialWorkflow(registry, options)
     },
   }
 }
@@ -64,9 +55,5 @@ const serialWorkflow = <W extends UnknownWorkflowDefinition>(
     return summary
   }
 
-  return {
-    taskOrder,
-    emitter,
-    run,
-  }
+  return { taskOrder, emitter, run }
 }
