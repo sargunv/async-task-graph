@@ -19,12 +19,26 @@ export const fooTask = newSimpleTask({
   },
 })
 
+export const badFooTask = newSimpleTask({
+  ...fooTask,
+  run: () => {
+    throw new Error(`foo error`)
+  },
+})
+
 export const barTask = newSimpleTask({
   id: `bar`,
   dependencies: [`foo`],
   run: ({ getTaskResult }) => {
     const str = getTaskResult(`foo`)
     return Promise.resolve(str.length)
+  },
+})
+
+export const badBarTask = newSimpleTask({
+  ...barTask,
+  run: () => {
+    throw new Error(`bar error`)
   },
 })
 
@@ -37,7 +51,13 @@ export const bazTask = newSimpleTask({
   },
 })
 
-// intentionally out of order for topo-sort testing
-export const ALL_TASKS = [barTask, fooTask, bazTask]
+export const badBazTask = newSimpleTask({
+  ...bazTask,
+  run: () => {
+    throw new Error(`baz error`)
+  },
+})
+
+export const ALL_TASKS = [fooTask, barTask, bazTask]
 
 export type SimpleTaskId = (typeof ALL_TASKS)[number][`id`]

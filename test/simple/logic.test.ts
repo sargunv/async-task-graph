@@ -3,242 +3,240 @@ import { describe, expect, it, vi } from "vitest"
 import { makeWorkflowBuilder } from "../../src/index.js"
 import {
   ALL_TASKS,
+  badBarTask,
+  badBazTask,
+  badFooTask,
   barTask,
   bazTask,
   fooTask,
+  SimpleTaskId,
   SimpleWorkflow,
 } from "../helpers/simple.js"
 
 describe(`a linear workflow with no errors`, () => {
-  it(`topo-sorts the tasks before execution`, () => {
+  it.each([
+    { tasks: [fooTask, barTask, bazTask] },
+    { tasks: [fooTask, bazTask, barTask] },
+    { tasks: [barTask, fooTask, bazTask] },
+    { tasks: [barTask, bazTask, fooTask] },
+    { tasks: [bazTask, fooTask, barTask] },
+    { tasks: [bazTask, barTask, fooTask] },
+  ])(`topo-sorts the tasks before execution (input %#)`, ({ tasks }) => {
     const wfBuilder = makeWorkflowBuilder<SimpleWorkflow>()
-    for (const task of ALL_TASKS) wfBuilder.addTask(task)
+    for (const task of tasks) wfBuilder.addTask(task)
     const { taskOrder } = wfBuilder.buildSerialWorkflow()
-
     expect(taskOrder).toEqual([`foo`, `bar`, `baz`])
   })
 
-  it(`emits the workflow lifecycle events for a completed workflow`, async () => {
-    const wfBuilder = makeWorkflowBuilder<SimpleWorkflow>()
-    for (const task of ALL_TASKS) wfBuilder.addTask(task)
-    const { emitter, runWorkflow } = wfBuilder.buildSerialWorkflow()
-
-    const workflowStartFn = vi.fn()
-    const workflowFinishFn = vi.fn()
-
-    emitter.on(`workflowStart`, workflowStartFn)
-    emitter.on(`workflowFinish`, workflowFinishFn)
-
-    await runWorkflow({ hello: `world` })
-
-    expect(workflowStartFn).toHaveBeenCalledWith({
-      taskOrder: [`foo`, `bar`, `baz`],
+  it.each([
+    {
+      description: `no failed tasks`,
+      tasks: ALL_TASKS,
       context: { hello: `world` },
-    })
-
-    expect(workflowFinishFn).toHaveBeenCalledWith({
-      tasksFinished: [`foo`, `bar`, `baz`],
-      tasksErrored: [],
-      tasksSkipped: [],
-    })
-  })
-
-  it(`emits the workflow lifecycle events for a failed workflow`, async () => {
-    const wfBuilder = makeWorkflowBuilder<SimpleWorkflow>()
-    for (const task of [fooTask, bazTask]) wfBuilder.addTask(task)
-
-    wfBuilder.addTask({
-      ...barTask,
-      run: () => {
-        throw new Error(`bar error`)
+      workflowStartEvent: {
+        context: { hello: `world` },
+        taskOrder: [`foo`, `bar`, `baz`],
       },
-    })
-
-    const { emitter, runWorkflow } = wfBuilder.buildSerialWorkflow()
-
-    const workflowStartFn = vi.fn()
-    const workflowFinishFn = vi.fn()
-
-    emitter.on(`workflowStart`, workflowStartFn)
-    emitter.on(`workflowFinish`, workflowFinishFn)
-
-    await runWorkflow({ hello: `world` })
-
-    expect(workflowStartFn).toHaveBeenCalledWith({
-      taskOrder: [`foo`, `bar`, `baz`],
+      taskStartEvents: [{ id: `foo` }, { id: `bar` }, { id: `baz` }],
+      taskFinishEvents: [
+        { id: `foo`, result: `{"hello":"world"}` },
+        { id: `bar`, result: 17 },
+        { id: `baz`, result: undefined },
+      ],
+      taskThrowEvents: [],
+      taskSkipEvents: [],
+      workflowFinishEvent: {
+        tasksFinished: [`foo`, `bar`, `baz`],
+        tasksErrored: [],
+        tasksSkipped: [],
+      },
+    },
+    {
+      description: `a failed task at the start`,
+      tasks: [badFooTask, barTask, bazTask],
       context: { hello: `world` },
-    })
-
-    expect(workflowFinishFn).toHaveBeenCalledWith({
-      tasksFinished: [`foo`],
-      tasksErrored: [`bar`],
-      tasksSkipped: [`baz`],
-    })
-  })
-
-  it(`emits the task lifecycle events for completed tasks`, async () => {
-    const wfBuilder = makeWorkflowBuilder<SimpleWorkflow>()
-    for (const task of ALL_TASKS) wfBuilder.addTask(task)
-    const { emitter, runWorkflow } = wfBuilder.buildSerialWorkflow()
-
-    const taskStartFn = vi.fn()
-    const taskFinishFn = vi.fn()
-    const taskThrowFn = vi.fn()
-    const taskSkipFn = vi.fn()
-
-    emitter.on(`taskStart`, taskStartFn)
-    emitter.on(`taskFinish`, taskFinishFn)
-    emitter.on(`taskThrow`, taskThrowFn)
-    emitter.on(`taskSkip`, taskSkipFn)
-
-    await runWorkflow({ hello: `world` })
-
-    expect(taskStartFn).toHaveBeenCalledTimes(3)
-    expect(taskStartFn).toHaveBeenNthCalledWith(1, { id: `foo` })
-    expect(taskStartFn).toHaveBeenNthCalledWith(2, { id: `bar` })
-    expect(taskStartFn).toHaveBeenNthCalledWith(3, { id: `baz` })
-
-    expect(taskFinishFn).toHaveBeenCalledTimes(3)
-    expect(taskFinishFn).toHaveBeenNthCalledWith(1, {
-      id: `foo`,
-      result: `{"hello":"world"}`,
-    })
-    expect(taskFinishFn).toHaveBeenNthCalledWith(2, {
-      id: `bar`,
-      result: 17,
-    })
-    expect(taskFinishFn).toHaveBeenNthCalledWith(3, {
-      id: `baz`,
-      result: undefined,
-    })
-
-    expect(taskThrowFn).not.toHaveBeenCalled()
-    expect(taskSkipFn).not.toHaveBeenCalled()
-  })
-
-  it(`emits the task lifecycle events for failed tasks`, async () => {
-    const wfBuilder = makeWorkflowBuilder<SimpleWorkflow>()
-    for (const task of [fooTask, bazTask]) wfBuilder.addTask(task)
-
-    wfBuilder.addTask({
-      ...barTask,
-      run: () => {
-        throw new Error(`bar error`)
+      taskStartEvents: [{ id: `foo` }],
+      taskFinishEvents: [],
+      taskThrowEvents: [{ id: `foo`, error: new Error(`foo error`) }],
+      taskSkipEvents: [
+        { id: `bar`, erroredDependencies: [`foo`], skippedDependencies: [] },
+        { id: `baz`, erroredDependencies: [], skippedDependencies: [`bar`] },
+      ],
+      workflowStartEvent: {
+        context: { hello: `world` },
+        taskOrder: [`foo`, `bar`, `baz`],
       },
-    })
-
-    const { emitter, runWorkflow } = wfBuilder.buildSerialWorkflow()
-
-    const taskStartFn = vi.fn()
-    const taskFinishFn = vi.fn()
-    const taskThrowFn = vi.fn()
-    const taskSkipFn = vi.fn()
-
-    emitter.on(`taskStart`, taskStartFn)
-    emitter.on(`taskFinish`, taskFinishFn)
-    emitter.on(`taskSkip`, taskSkipFn)
-    emitter.on(`taskThrow`, taskThrowFn)
-
-    await runWorkflow({ hello: `world` })
-
-    expect(taskStartFn).toHaveBeenCalledTimes(2)
-    expect(taskStartFn).toHaveBeenNthCalledWith(1, { id: `foo` })
-    expect(taskStartFn).toHaveBeenNthCalledWith(2, { id: `bar` })
-
-    expect(taskFinishFn).toHaveBeenCalledTimes(1)
-    expect(taskFinishFn).toHaveBeenNthCalledWith(1, {
-      id: `foo`,
-      result: `{"hello":"world"}`,
-    })
-
-    expect(taskThrowFn).toHaveBeenCalledTimes(1)
-    expect(taskThrowFn).toHaveBeenNthCalledWith(1, {
-      id: `bar`,
-      error: new Error(`bar error`),
-    })
-
-    expect(taskSkipFn).toHaveBeenCalledTimes(1)
-    expect(taskSkipFn).toHaveBeenNthCalledWith(1, {
-      id: `baz`,
-      erroredDependencies: [`bar`],
-      skippedDependencies: [],
-    })
-  })
-
-  it(`returns the workflow execution details on completion`, async () => {
-    const wfBuilder = makeWorkflowBuilder<SimpleWorkflow>()
-    for (const task of ALL_TASKS) wfBuilder.addTask(task)
-    const workflow = wfBuilder.buildSerialWorkflow()
-    const result = await workflow.runWorkflow({ hello: `world` })
-
-    expect(result).toEqual({
-      tasksFinished: [`foo`, `bar`, `baz`],
-      tasksErrored: [],
-      tasksSkipped: [],
-    })
-  })
-
-  it(`returns the workflow execution details on failure`, async () => {
-    const wfBuilder = makeWorkflowBuilder<SimpleWorkflow>()
-    for (const task of [fooTask, bazTask]) wfBuilder.addTask(task)
-
-    wfBuilder.addTask({
-      ...barTask,
-      run: () => {
-        throw new Error(`bar error`)
+      workflowFinishEvent: {
+        tasksFinished: [],
+        tasksErrored: [`foo`],
+        tasksSkipped: [`bar`, `baz`],
       },
-    })
-
-    const workflow = wfBuilder.buildSerialWorkflow()
-    const result = await workflow.runWorkflow({ hello: `world` })
-
-    expect(result).toEqual({
-      tasksFinished: [`foo`],
-      tasksErrored: [`bar`],
-      tasksSkipped: [`baz`],
-    })
-  })
-
-  it(`selects and executes a sub-graph, including dependencies`, async () => {
-    const wfBuilder = makeWorkflowBuilder<SimpleWorkflow>()
-    for (const task of ALL_TASKS) wfBuilder.addTask(task)
-    const { emitter, runWorkflow } = wfBuilder.buildSerialWorkflow({
+    },
+    {
+      description: `a failed task in the middle`,
+      tasks: [fooTask, badBarTask, bazTask],
+      context: { hello: `world` },
+      taskStartEvents: [{ id: `foo` }, { id: `bar` }],
+      taskFinishEvents: [{ id: `foo`, result: `{"hello":"world"}` }],
+      taskThrowEvents: [{ id: `bar`, error: new Error(`bar error`) }],
+      taskSkipEvents: [
+        { id: `baz`, erroredDependencies: [`bar`], skippedDependencies: [] },
+      ],
+      workflowStartEvent: {
+        context: { hello: `world` },
+        taskOrder: [`foo`, `bar`, `baz`],
+      },
+      workflowFinishEvent: {
+        tasksFinished: [`foo`],
+        tasksErrored: [`bar`],
+        tasksSkipped: [`baz`],
+      },
+    },
+    {
+      description: `a failed task at the end`,
+      tasks: [fooTask, barTask, badBazTask],
+      context: { hello: `world` },
+      taskStartEvents: [{ id: `foo` }, { id: `bar` }, { id: `baz` }],
+      taskFinishEvents: [
+        { id: `foo`, result: `{"hello":"world"}` },
+        { id: `bar`, result: 17 },
+      ],
+      taskThrowEvents: [{ id: `baz`, error: new Error(`baz error`) }],
+      taskSkipEvents: [],
+      workflowStartEvent: {
+        context: { hello: `world` },
+        taskOrder: [`foo`, `bar`, `baz`],
+      },
+      workflowFinishEvent: {
+        tasksFinished: [`foo`, `bar`],
+        tasksErrored: [`baz`],
+        tasksSkipped: [],
+      },
+    },
+    {
+      description: `the first task selected`,
+      tasks: ALL_TASKS,
+      context: { hello: `world` },
+      selectedTasks: [`foo`],
+      workflowStartEvent: {
+        context: { hello: `world` },
+        taskOrder: [`foo`],
+      },
+      taskStartEvents: [{ id: `foo` }],
+      taskFinishEvents: [{ id: `foo`, result: `{"hello":"world"}` }],
+      taskThrowEvents: [],
+      taskSkipEvents: [],
+      workflowFinishEvent: {
+        tasksFinished: [`foo`],
+        tasksErrored: [],
+        tasksSkipped: [],
+      },
+    },
+    {
+      description: `the second task selected`,
+      tasks: ALL_TASKS,
+      context: { hello: `world` },
       selectedTasks: [`bar`],
-    })
+      workflowStartEvent: {
+        context: { hello: `world` },
+        taskOrder: [`foo`, `bar`],
+      },
+      taskStartEvents: [{ id: `foo` }, { id: `bar` }],
+      taskFinishEvents: [
+        { id: `foo`, result: `{"hello":"world"}` },
+        { id: `bar`, result: 17 },
+      ],
+      taskThrowEvents: [],
+      taskSkipEvents: [],
+      workflowFinishEvent: {
+        tasksFinished: [`foo`, `bar`],
+        tasksErrored: [],
+        tasksSkipped: [],
+      },
+    },
+    {
+      description: `the second task selected and a failed task at the start`,
+      tasks: [badFooTask, barTask, bazTask],
+      context: { hello: `world` },
+      selectedTasks: [`bar`],
+      workflowStartEvent: {
+        context: { hello: `world` },
+        taskOrder: [`foo`, `bar`],
+      },
+      taskStartEvents: [{ id: `foo` }],
+      taskFinishEvents: [],
+      taskThrowEvents: [{ id: `foo`, error: new Error(`foo error`) }],
+      taskSkipEvents: [
+        { id: `bar`, erroredDependencies: [`foo`], skippedDependencies: [] },
+      ],
+      workflowFinishEvent: {
+        tasksFinished: [],
+        tasksErrored: [`foo`],
+        tasksSkipped: [`bar`],
+      },
+    },
+  ])(
+    `executes a workflow with $description`,
+    async ({
+      tasks,
+      context,
+      workflowStartEvent,
+      taskStartEvents,
+      taskFinishEvents,
+      taskThrowEvents,
+      taskSkipEvents,
+      workflowFinishEvent,
+      selectedTasks,
+    }) => {
+      const wfBuilder = makeWorkflowBuilder<SimpleWorkflow>()
+      for (const task of tasks) wfBuilder.addTask(task)
 
-    const taskStartFn = vi.fn()
-    const taskFinishFn = vi.fn()
-    const taskThrowFn = vi.fn()
-    const taskSkipFn = vi.fn()
+      const { emitter, runWorkflow, taskOrder } = wfBuilder.buildSerialWorkflow(
+        {
+          selectedTasks: selectedTasks as SimpleTaskId[] | undefined,
+        },
+      )
 
-    emitter.on(`taskStart`, taskStartFn)
-    emitter.on(`taskFinish`, taskFinishFn)
-    emitter.on(`taskThrow`, taskThrowFn)
-    emitter.on(`taskSkip`, taskSkipFn)
+      expect(taskOrder).toEqual(workflowStartEvent.taskOrder)
 
-    const result = await runWorkflow({ hello: `world` })
+      const workflowStartFn = vi.fn()
+      const taskStartFn = vi.fn()
+      const taskFinishFn = vi.fn()
+      const taskThrowFn = vi.fn()
+      const taskSkipFn = vi.fn()
+      const workflowFinishFn = vi.fn()
 
-    expect(taskStartFn).toHaveBeenCalledTimes(2)
-    expect(taskStartFn).toHaveBeenNthCalledWith(1, { id: `foo` })
-    expect(taskStartFn).toHaveBeenNthCalledWith(2, { id: `bar` })
+      emitter.on(`workflowStart`, workflowStartFn)
+      emitter.on(`taskStart`, taskStartFn)
+      emitter.on(`taskFinish`, taskFinishFn)
+      emitter.on(`taskThrow`, taskThrowFn)
+      emitter.on(`taskSkip`, taskSkipFn)
+      emitter.on(`workflowFinish`, workflowFinishFn)
 
-    expect(taskFinishFn).toHaveBeenCalledTimes(2)
-    expect(taskFinishFn).toHaveBeenNthCalledWith(1, {
-      id: `foo`,
-      result: `{"hello":"world"}`,
-    })
-    expect(taskFinishFn).toHaveBeenNthCalledWith(2, {
-      id: `bar`,
-      result: 17,
-    })
+      const result = await runWorkflow(context)
 
-    expect(taskThrowFn).not.toHaveBeenCalled()
-    expect(taskSkipFn).not.toHaveBeenCalled()
+      expect(workflowStartFn).toHaveBeenCalledOnce()
+      expect(workflowStartFn).toHaveBeenCalledWith(workflowStartEvent)
 
-    expect(result).toEqual({
-      tasksFinished: [`foo`, `bar`],
-      tasksErrored: [],
-      tasksSkipped: [],
-    })
-  })
+      expect(taskStartFn).toHaveBeenCalledTimes(taskStartEvents.length)
+      for (const [i, event] of taskStartEvents.entries())
+        expect(taskStartFn).toHaveBeenNthCalledWith(i + 1, event)
+
+      expect(taskFinishFn).toHaveBeenCalledTimes(taskFinishEvents.length)
+      for (const [i, event] of taskFinishEvents.entries())
+        expect(taskFinishFn).toHaveBeenNthCalledWith(i + 1, event)
+
+      expect(taskThrowFn).toHaveBeenCalledTimes(taskThrowEvents.length)
+      for (const [i, event] of taskThrowEvents.entries())
+        expect(taskThrowFn).toHaveBeenNthCalledWith(i + 1, event)
+
+      expect(taskSkipFn).toHaveBeenCalledTimes(taskSkipEvents.length)
+      for (const [i, event] of taskSkipEvents.entries())
+        expect(taskSkipFn).toHaveBeenNthCalledWith(i + 1, event)
+
+      expect(workflowFinishFn).toHaveBeenCalledOnce()
+      expect(workflowFinishFn).toHaveBeenCalledWith(workflowFinishEvent)
+      expect(result).toEqual(workflowFinishEvent)
+    },
+  )
 })
