@@ -6,7 +6,7 @@ import type {
   Workflow,
 } from "./core-types.js"
 import { typedEmitter } from "./event-emitter.js"
-import { WorkflowEvents } from "./event-types.js"
+import type { WorkflowEvents } from "./event-types.js"
 import { runTask } from "./task.js"
 import { validateTaskGraph } from "./task-graph.js"
 import { taskTracker } from "./task-tracker.js"

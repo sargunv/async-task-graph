@@ -12,9 +12,9 @@ a focus on strongly typed task definitions.
 <!-- !test in usage -->
 
 ```ts
-import { makeWorkflowBuilder } from "async-task-graph"
+import { workflowBuilder } from "async-task-graph"
 
-const builder = makeWorkflowBuilder<{
+const builder = workflowBuilder<{
   context: { hello: string }
   returns: {
     foo: string
@@ -39,13 +39,13 @@ builder.addTask({
   },
 })
 
-const { emitter, runWorkflow } = builder.buildSerialWorkflow()
+const { emitter, run } = builder.serialWorkflow()
 
 emitter.on(`taskFinish`, ({ id, result }) => {
   console.log(`${id} returned ${JSON.stringify(result)}`)
 })
 
-runWorkflow({ hello: `world` }).then(() => {
+run({ hello: `world` }).then(() => {
   console.log(`done`)
 })
 ```
