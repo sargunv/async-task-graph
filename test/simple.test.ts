@@ -191,7 +191,7 @@ describe(`a linear workflow with no errors`, () => {
       const wfBuilder = workflowBuilder<SimpleWorkflow>()
       for (const task of tasks) wfBuilder.addTask(task)
 
-      const { emitter, run, taskOrder } = wfBuilder.serialWorkflow({
+      const { emitter, run, taskOrder } = wfBuilder.concurrentWorkflow({
         selectedTasks: selectedTasks as SimpleTaskId[] | undefined,
       })
 

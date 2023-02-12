@@ -1,3 +1,5 @@
+import { setTimeout } from "node:timers/promises"
+
 import { makeTaskFunction, type WorkflowDefinition } from "../../src/index.js"
 
 export type SimpleWorkflow = WorkflowDefinition<{
@@ -14,8 +16,9 @@ export const newSimpleTask = makeTaskFunction<SimpleWorkflow>()
 export const fooTask = newSimpleTask({
   id: `foo`,
   dependencies: [],
-  run: ({ context }) => {
-    return Promise.resolve(JSON.stringify(context))
+  run: async ({ context }) => {
+    await setTimeout(5)
+    return JSON.stringify(context)
   },
 })
 
@@ -29,9 +32,10 @@ export const badFooTask = newSimpleTask({
 export const barTask = newSimpleTask({
   id: `bar`,
   dependencies: [`foo`],
-  run: ({ getTaskResult }) => {
+  run: async ({ getTaskResult }) => {
+    await setTimeout(2)
     const str = getTaskResult(`foo`)
-    return Promise.resolve(str.length)
+    return str.length
   },
 })
 
