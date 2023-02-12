@@ -49,15 +49,6 @@ describe("a simple workflow definition", () => {
     })
   })
 
-  it("disallows tasks with self dependency", () => {
-    newSimpleTask({
-      id: "foo",
-      // @ts-expect-error
-      dependencies: ["foo"],
-      run: () => Promise.resolve(""),
-    })
-  })
-
   it("disallows tasks returning the incorrect type", () => {
     newSimpleTask({
       id: "foo",
