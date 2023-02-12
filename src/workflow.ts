@@ -7,6 +7,7 @@ import type {
 } from "./core-types.js"
 import { typedEmitter } from "./event-emitter.js"
 import { WorkflowEvents } from "./event-types.js"
+import { runTask } from "./task.js"
 import { validateTaskGraph } from "./task-graph.js"
 import { taskTracker } from "./task-tracker.js"
 
@@ -52,36 +53,11 @@ const serialWorkflow = <W extends UnknownWorkflowDefinition>(
 
   const run = async (context: W[`context`]) => {
     Object.freeze(context)
+
     emitter.emit(`workflowStart`, { taskOrder, context })
 
     const tracker = taskTracker<W>(emitter)
-
-    for (const id of taskOrder) {
-      const erroredDependencies = []
-      const skippedDependencies = []
-
-      for (const dep of tasks.get(id)!.dependencies) {
-        if (tracker.isErrored(dep)) erroredDependencies.push(dep)
-        if (tracker.isSkipped(dep)) skippedDependencies.push(dep)
-      }
-
-      if (erroredDependencies.length > 0 || skippedDependencies.length > 0) {
-        tracker.skip(id, erroredDependencies, skippedDependencies)
-      } else {
-        tracker.start(id)
-
-        try {
-          const result = await tasks.get(id)!.run({
-            getTaskResult: tracker.getResult,
-            context,
-          })
-          tracker.finish(id, result)
-        } catch (error) {
-          if (error instanceof Error) tracker.error(id, error)
-          else tracker.error(id, new Error(String(error)))
-        }
-      }
-    }
+    for (const id of taskOrder) await runTask(id, { tracker, context, tasks })
 
     const summary = tracker.getSummary()
     emitter.emit(`workflowFinish`, summary)
