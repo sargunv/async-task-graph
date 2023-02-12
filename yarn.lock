@@ -332,9 +332,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sargunv/eslint-config@npm:^0.4.0":
-  version: 0.4.0
-  resolution: "@sargunv/eslint-config@npm:0.4.0"
+"@sargunv/eslint-config@npm:^0.5.0":
+  version: 0.5.0
+  resolution: "@sargunv/eslint-config@npm:0.5.0"
   dependencies:
     "@next/eslint-plugin-next": "npm:^13.1.6"
     "@rushstack/eslint-patch": "npm:^1.2.0"
@@ -365,7 +365,7 @@ __metadata:
       optional: true
     typescript:
       optional: true
-  checksum: 5026e3507d47560418cc95752fca3e778a395614f3fc16eabe55aa47573ad925e874aaa7f06e16b8f4a2f2cb1a79b4385c0226211b240a11d00d4a32537f5165
+  checksum: 6a128c9e72038ce4ca3a36370ad60775826ce30c56072ee00bda2797b7c9efe6422d5d37acba125a88d89cdc768261e95e4859da747ece9cbb17b7df3cc28f1c
   languageName: node
   linkType: hard
 
@@ -870,7 +870,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "async-task-graph@workspace:."
   dependencies:
-    "@sargunv/eslint-config": "npm:^0.4.0"
+    "@sargunv/eslint-config": "npm:^0.5.0"
     "@sargunv/prettier-config": "npm:^0.2.2"
     "@sargunv/typescript-config": "npm:^0.1.0"
     "@types/node": "npm:^18.13.0"

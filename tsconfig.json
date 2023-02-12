@@ -2,5 +2,6 @@
   "extends": "@sargunv/typescript-config/node",
   "compilerOptions": {
     "outDir": "out"
-  }
+  },
+  "exclude": ["dist"]
 }

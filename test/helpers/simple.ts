@@ -1,4 +1,4 @@
-import { makeTaskFunction, type WorkflowDefinition } from "../src/index.js"
+import { makeTaskFunction, type WorkflowDefinition } from "../../src/index.js"
 
 export type SimpleWorkflow = WorkflowDefinition<{
   context: { hello: string }
