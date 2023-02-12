@@ -33,9 +33,9 @@ describe(`a linear workflow with no errors`, () => {
       description: `no failed tasks`,
       tasks: ALL_TASKS,
       context: { hello: `world` },
+      taskOrder: [`foo`, `bar`, `baz`],
       workflowStartEvent: {
         context: { hello: `world` },
-        taskOrder: [`foo`, `bar`, `baz`],
       },
       taskStartEvents: [{ id: `foo` }, { id: `bar` }, { id: `baz` }],
       taskFinishEvents: [
@@ -55,6 +55,7 @@ describe(`a linear workflow with no errors`, () => {
       description: `a failed task at the start`,
       tasks: [badFooTask, barTask, bazTask],
       context: { hello: `world` },
+      taskOrder: [`foo`, `bar`, `baz`],
       taskStartEvents: [{ id: `foo` }],
       taskFinishEvents: [],
       taskThrowEvents: [{ id: `foo`, error: new Error(`foo error`) }],
@@ -64,7 +65,6 @@ describe(`a linear workflow with no errors`, () => {
       ],
       workflowStartEvent: {
         context: { hello: `world` },
-        taskOrder: [`foo`, `bar`, `baz`],
       },
       workflowFinishEvent: {
         tasksFinished: [],
@@ -76,6 +76,7 @@ describe(`a linear workflow with no errors`, () => {
       description: `a failed task in the middle`,
       tasks: [fooTask, badBarTask, bazTask],
       context: { hello: `world` },
+      taskOrder: [`foo`, `bar`, `baz`],
       taskStartEvents: [{ id: `foo` }, { id: `bar` }],
       taskFinishEvents: [{ id: `foo`, result: `{"hello":"world"}` }],
       taskThrowEvents: [{ id: `bar`, error: new Error(`bar error`) }],
@@ -84,7 +85,6 @@ describe(`a linear workflow with no errors`, () => {
       ],
       workflowStartEvent: {
         context: { hello: `world` },
-        taskOrder: [`foo`, `bar`, `baz`],
       },
       workflowFinishEvent: {
         tasksFinished: [`foo`],
@@ -96,6 +96,7 @@ describe(`a linear workflow with no errors`, () => {
       description: `a failed task at the end`,
       tasks: [fooTask, barTask, badBazTask],
       context: { hello: `world` },
+      taskOrder: [`foo`, `bar`, `baz`],
       taskStartEvents: [{ id: `foo` }, { id: `bar` }, { id: `baz` }],
       taskFinishEvents: [
         { id: `foo`, result: `{"hello":"world"}` },
@@ -105,7 +106,6 @@ describe(`a linear workflow with no errors`, () => {
       taskSkipEvents: [],
       workflowStartEvent: {
         context: { hello: `world` },
-        taskOrder: [`foo`, `bar`, `baz`],
       },
       workflowFinishEvent: {
         tasksFinished: [`foo`, `bar`],
@@ -118,9 +118,9 @@ describe(`a linear workflow with no errors`, () => {
       tasks: ALL_TASKS,
       context: { hello: `world` },
       selectedTasks: [`foo`],
+      taskOrder: [`foo`],
       workflowStartEvent: {
         context: { hello: `world` },
-        taskOrder: [`foo`],
       },
       taskStartEvents: [{ id: `foo` }],
       taskFinishEvents: [{ id: `foo`, result: `{"hello":"world"}` }],
@@ -137,9 +137,9 @@ describe(`a linear workflow with no errors`, () => {
       tasks: ALL_TASKS,
       context: { hello: `world` },
       selectedTasks: [`bar`],
+      taskOrder: [`foo`, `bar`],
       workflowStartEvent: {
         context: { hello: `world` },
-        taskOrder: [`foo`, `bar`],
       },
       taskStartEvents: [{ id: `foo` }, { id: `bar` }],
       taskFinishEvents: [
@@ -159,9 +159,9 @@ describe(`a linear workflow with no errors`, () => {
       tasks: [badFooTask, barTask, bazTask],
       context: { hello: `world` },
       selectedTasks: [`bar`],
+      taskOrder: [`foo`, `bar`],
       workflowStartEvent: {
         context: { hello: `world` },
-        taskOrder: [`foo`, `bar`],
       },
       taskStartEvents: [{ id: `foo` }],
       taskFinishEvents: [],
@@ -195,7 +195,7 @@ describe(`a linear workflow with no errors`, () => {
         selectedTasks: selectedTasks as SimpleTaskId[] | undefined,
       })
 
-      expect(taskOrder).toEqual(workflowStartEvent.taskOrder)
+      expect(taskOrder).toEqual(taskOrder)
 
       const workflowStartFn = vi.fn()
       const taskStartFn = vi.fn()

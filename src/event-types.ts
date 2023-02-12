@@ -48,7 +48,6 @@ export interface TaskSkipArgs<W extends UnknownWorkflowDefinition> {
  */
 export interface WorkflowStartArgs<W extends UnknownWorkflowDefinition> {
   context: W[`context`]
-  taskOrder: TaskId<W>[]
 }
 
 /**

@@ -45,7 +45,7 @@ const serialWorkflow = <W extends UnknownWorkflowDefinition>(
   const run = async (context: W[`context`]) => {
     Object.freeze(context)
 
-    emitter.emit(`workflowStart`, { taskOrder, context })
+    emitter.emit(`workflowStart`, { context })
 
     const tracker = taskTracker<W>(emitter)
     for (const id of taskOrder) await runTask(id, { tracker, context, tasks })
