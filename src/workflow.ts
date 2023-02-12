@@ -16,55 +16,78 @@ import {
   WorkflowStartArgs,
 } from "./event-types.js"
 
-type CompleteRegistry<W extends UnknownWorkflowDefinition> = {
+type TaskRegistry<W extends UnknownWorkflowDefinition> = {
   [Id in TaskId<W>]: Task<W, Id, TaskId<W>>
 }
 
-type TaskRegistry<W extends UnknownWorkflowDefinition> = Partial<
-  CompleteRegistry<W>
->
+export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>() => {
+  const registry: Partial<TaskRegistry<W>> = {}
 
-const buildSerialWorkflow =
+  return {
+    addTask: <Id extends TaskId<W>, DepId extends TaskId<W>>(
+      task: Task<W, Id, DepId>,
+    ) => {
+      if (registry[task.id])
+        throw new Error(`Task with id ${task.id} registered twice`)
+
+      if ((task.dependencies as string[]).includes(task.id))
+        throw new Error(`Task with id ${task.id} depends on itself`)
+
+      registry[task.id] = task
+    },
+
+    buildSerialWorkflow: buildSerialWorkflowFn(registry as TaskRegistry<W>),
+  }
+}
+
+const buildTaskGraph = <W extends UnknownWorkflowDefinition>(
+  tasks: Map<TaskId<W>, TaskFor<W>>,
+) => {
+  for (const task of tasks.values()) {
+    for (const dep of task.dependencies) {
+      if (!tasks.has(dep))
+        throw new Error(`Task ${task.id} has unregistered dependency ${dep}`)
+    }
+  }
+
+  const graph = Graph()
+
+  for (const task of tasks.values()) {
+    graph.addNode(task.id)
+    for (const dep of task.dependencies) {
+      // missing nodes are added implicitly so order doesn't matter
+      graph.addEdge(task.id, dep)
+    }
+  }
+
+  if (graph.hasCycle()) throw new Error(`Task graph has a cycle`)
+
+  return graph
+}
+
+interface TaskEvents<W extends UnknownWorkflowDefinition> {
+  taskStart: TaskStartArgs<W>
+  taskFinish: TaskFinishArgs<W>
+  taskThrow: TaskThrowArgs<W>
+  taskSkip: TaskSkipArgs<W>
+}
+
+const buildSerialWorkflowFn =
   <W extends UnknownWorkflowDefinition>(taskRegistry: TaskRegistry<W>) =>
   (options: { selectedTasks?: TaskId<W>[] } = {}) => {
-    const taskMap = new Map(Object.entries(taskRegistry as CompleteRegistry<W>))
-
-    // sanity check dependencies in case TS was ignored
-    for (const task of taskMap.values()) {
-      for (const dep of task.dependencies) {
-        if (!taskMap.has(dep))
-          throw new Error(`Task ${task.id} has unregistered dependency ${dep}`)
-      }
-    }
-
-    // construct a graph so we can detect cycles and topo-sort
-
-    const graph = Graph()
-
-    for (const task of taskMap.values()) {
-      graph.addNode(task.id)
-      for (const dep of task.dependencies) {
-        // missing nodes are added implicitly so order doesn't matter
-        graph.addEdge(task.id, dep)
-      }
-    }
-
-    if (graph.hasCycle()) throw new Error(`Task graph has a cycle`)
+    const tasks = new Map(Object.entries(taskRegistry))
+    const graph = buildTaskGraph(tasks)
 
     const taskOrder: TaskId<W>[] = graph
       .topologicalSort(options.selectedTasks, true)
       .reverse()
 
-    // done with validation, now we can return the execution tools
-
-    const emitter = typedEmitter<{
-      workflowStart: WorkflowStartArgs<W>
-      taskStart: TaskStartArgs<W>
-      taskFinish: TaskFinishArgs<W>
-      taskThrow: TaskThrowArgs<W>
-      taskSkip: TaskSkipArgs<W>
-      workflowFinish: WorkflowFinishArgs<W>
-    }>()
+    const emitter = typedEmitter<
+      TaskEvents<W> & {
+        workflowStart: WorkflowStartArgs<W>
+        workflowFinish: WorkflowFinishArgs<W>
+      }
+    >()
 
     const runWorkflow = async (context: W[`context`]) => {
       emitter.emit(`workflowStart`, { taskOrder, context })
@@ -86,7 +109,7 @@ const buildSerialWorkflow =
         const erroredDependencies = []
         const skippedDependencies = []
 
-        for (const dep of taskMap.get(id)!.dependencies) {
+        for (const dep of tasks.get(id)!.dependencies) {
           if (tasksErrored.has(dep)) erroredDependencies.push(dep)
           else if (tasksSkipped.has(dep)) skippedDependencies.push(dep)
         }
@@ -103,7 +126,7 @@ const buildSerialWorkflow =
           emitter.emit(`taskStart`, { id })
 
           try {
-            const result = await taskMap.get(id)!.run({
+            const result = await tasks.get(id)!.run({
               // @ts-expect-error
               getTaskResult,
               context,
@@ -143,23 +166,3 @@ const buildSerialWorkflow =
       runWorkflow,
     }
   }
-
-export const makeWorkflowBuilder = <W extends UnknownWorkflowDefinition>() => {
-  const registry: TaskRegistry<W> = {}
-
-  return {
-    addTask: <Id extends TaskId<W>, DepId extends TaskId<W>>(
-      task: Task<W, Id, DepId>,
-    ) => {
-      if (registry[task.id])
-        throw new Error(`Task with id ${task.id} registered twice`)
-
-      if ((task.dependencies as string[]).includes(task.id))
-        throw new Error(`Task with id ${task.id} depends on itself`)
-
-      registry[task.id] = task
-    },
-
-    buildSerialWorkflow: buildSerialWorkflow(registry),
-  }
-}
