@@ -83,12 +83,13 @@ const newTaskTracker = <W extends UnknownWorkflowDefinition>(
     isErrored: (id: TaskId<W>) => tasksErrored.has(id),
     isSkipped: (id: TaskId<W>) => tasksSkipped.has(id),
     getResult: <Id extends TaskId<W>>(id: Id) => {
-      if (tasksFinished.has(id)) {
-        return tasksFinished.get(id) as W[`returns`][Id]
-      } else {
-        // type checker should prevent this
+      if (tasksErrored.has(id))
+        throw new Error(`Requested result for errored task ${id}`)
+      if (tasksSkipped.has(id))
+        throw new Error(`Requested result for skipped task ${id}`)
+      if (!tasksFinished.has(id))
         throw new Error(`Requested result for task ${id} before it finished`)
-      }
+      return tasksFinished.get(id) as W[`returns`][Id]
     },
     start: (id: TaskId<W>) => emitter.emit(`taskStart`, { id }),
     finish: <Id extends TaskId<W>>(id: Id, result: W[`returns`][Id]) => {
@@ -120,6 +121,7 @@ const newSerialWorkflow = <W extends UnknownWorkflowDefinition>(
   options: { selectedTasks?: TaskId<W>[] } = {},
 ) => {
   const { taskOrder } = validateTaskGraph(tasks, options.selectedTasks)
+  Object.freeze(taskOrder)
 
   const emitter = typedEmitter<
     TaskEvents<W> & {
@@ -129,6 +131,7 @@ const newSerialWorkflow = <W extends UnknownWorkflowDefinition>(
   >()
 
   const runWorkflow = async (context: W[`context`]) => {
+    Object.freeze(context)
     emitter.emit(`workflowStart`, { taskOrder, context })
 
     const tracker = newTaskTracker<W>(emitter)
