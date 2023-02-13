@@ -333,8 +333,8 @@ __metadata:
   linkType: hard
 
 "@sargunv/eslint-config@npm:^0.5.0":
-  version: 0.5.0
-  resolution: "@sargunv/eslint-config@npm:0.5.0"
+  version: 0.5.2
+  resolution: "@sargunv/eslint-config@npm:0.5.2"
   dependencies:
     "@next/eslint-plugin-next": "npm:^13.1.6"
     "@rushstack/eslint-patch": "npm:^1.2.0"
@@ -365,7 +365,7 @@ __metadata:
       optional: true
     typescript:
       optional: true
-  checksum: 6a128c9e72038ce4ca3a36370ad60775826ce30c56072ee00bda2797b7c9efe6422d5d37acba125a88d89cdc768261e95e4859da747ece9cbb17b7df3cc28f1c
+  checksum: 48bf7ca0795055b46cf3fc5af654f60cee73e358fc3105aa7674df19c2a57b8b9b0034105f43d9b3ae293ea29b9af0136fb309acd823061b739d50d1d9bb9d35
   languageName: node
   linkType: hard
 
