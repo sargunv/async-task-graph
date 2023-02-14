@@ -23,7 +23,6 @@
     "fix": "eslint . --fix && prettier --write .",
     "lint": "eslint . && prettier --check . --loglevel warn",
     "prepack": "run build",
-    "prepublish": "run lint && run test",
     "test": "vitest --run --coverage && vitest typecheck --run"
   },
   "prettier": "@sargunv/prettier-config",

@@ -7,24 +7,55 @@ on:
     branches: [main]
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node-version: [16.x, 18.x, 19.x]
-
+  lint:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: yarn
+      - run: yarn install --immutable
+      - run: yarn lint
+
+  configure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: yarn
+      - run: yarn install --immutable
+      - run: yarn configure && git diff --exit-code
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: yarn
+      - run: yarn install --immutable
+      - run: yarn build
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x, 19.x]
+        include:
+          - os: ubuntu-latest
+            node-version: 18.x
+            coverage: true
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
           cache: yarn
       - run: yarn install --immutable
-      - run: yarn configure && git diff --exit-code
-      - run: yarn prepublish
-      - run: yarn prepack
+      - run: yarn test
       - uses: codecov/codecov-action@v3
-        if: matrix.os == 'ubuntu-latest' && matrix.node-version == '18.x'
+        if: matrix.coverage
