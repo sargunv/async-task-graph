@@ -1,9 +1,9 @@
 [![NPM](https://img.shields.io/npm/v/async-task-graph)](https://www.npmjs.com/package/async-task-graph)
 [![CI](https://img.shields.io/github/actions/workflow/status/sargunv/async-task-graph/ci.yml)](https://github.com/sargunv/async-task-graph/actions/workflows/ci.yml)
-[![Codecov](https://img.shields.io/codecov/c/github/sargunv/async-task-graph)](https://app.codecov.io/gh/sargunv/async-task-graph/)
+[![Codecov](https://img.shields.io/codecov/c/github/sargunv/async-task-graph?token=IIYTXZ5MRM)](https://app.codecov.io/gh/sargunv/async-task-graph/)
 [![License](https://img.shields.io/npm/l/async-task-graph)](https://github.com/sargunv/async-task-graph/blob/main/LICENSE)
 [![Node](https://img.shields.io/node/v/async-task-graph)](https://github.com/sargunv/async-task-graph/blob/main/package.json)
-[![ESM](https://img.shields.io/badge/module%20type-esm-brightgreen)](https://github.com/sargunv/async-task-graph/blob/main/package.json)
+[![CommonJS](https://img.shields.io/badge/module%20type-commonjs-brightgreen)](https://github.com/sargunv/async-task-graph/blob/main/package.json)
 
 # async-task-graph
 
