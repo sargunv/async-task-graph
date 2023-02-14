@@ -6,7 +6,7 @@ import type {
 import { WorkflowError } from "./errors.js"
 import { taskTracker } from "./task-tracker.js"
 
-export const runTask = async <W extends UnknownWorkflowDefinition>(
+export const processTask = async <W extends UnknownWorkflowDefinition>(
   id: TaskId<W>,
   state: {
     tracker: ReturnType<typeof taskTracker<W>>

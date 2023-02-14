@@ -6,16 +6,9 @@ import type {
 } from "./core-types.js"
 import { typedEmitter } from "./event-emitter.js"
 import type { WorkflowEvents } from "./event-types.js"
-import { runTask } from "./run-task.js"
+import { processTask } from "./process-task.js"
 import { validateTaskGraph } from "./task-graph.js"
-import { TaskTracker, taskTracker } from "./task-tracker.js"
-
-export type WorkflowExecutor<W extends UnknownWorkflowDefinition> = (input: {
-  tasks: Map<TaskId<W>, TaskFor<W>>
-  taskOrder: TaskId<W>[]
-  context: W[`context`]
-  tracker: TaskTracker<W>
-}) => Promise<void>
+import { taskTracker } from "./task-tracker.js"
 
 export const workflowBuilder = <W extends UnknownWorkflowDefinition>() => {
   const tasks = new Map<TaskId<W>, TaskFor<W>>()
@@ -24,6 +17,7 @@ export const workflowBuilder = <W extends UnknownWorkflowDefinition>() => {
     addTask: <Id extends TaskId<W>, DepId extends TaskId<W>>(
       task: Task<W, Id, DepId>,
     ) => {
+      Object.freeze(task)
       if (tasks.has(task.id))
         throw new Error(`Task with id ${task.id} registered twice`)
       if ((task.dependencies as string[]).includes(task.id))
@@ -48,7 +42,12 @@ export const workflowBuilder = <W extends UnknownWorkflowDefinition>() => {
         emitter.emit(`workflowStart`, { context })
         const tracker = taskTracker<W>(emitter)
 
-        await workflowExecutor({ tasks, taskOrder, context, tracker })
+        await workflowExecutor({
+          taskOrder,
+          getTask: (id: TaskId<W>) => tasks.get(id),
+          runTask: (id: TaskId<W>) =>
+            processTask(id, { tracker, context, tasks }),
+        })
 
         const summary = tracker.getSummary()
         emitter.emit(`workflowFinish`, summary)
@@ -60,30 +59,36 @@ export const workflowBuilder = <W extends UnknownWorkflowDefinition>() => {
   }
 }
 
+export type WorkflowExecutor<W extends UnknownWorkflowDefinition> = (input: {
+  taskOrder: TaskId<W>[]
+  getTask: (id: TaskId<W>) => TaskFor<W> | undefined
+  runTask: (id: TaskId<W>) => Promise<void>
+}) => Promise<void>
+
 export const serialExecutor = async <W extends UnknownWorkflowDefinition>({
   taskOrder,
-  tracker,
-  context,
-  tasks,
+  runTask,
 }: Parameters<WorkflowExecutor<W>>[0]) => {
-  for (const id of taskOrder) await runTask(id, { tracker, context, tasks })
+  for (const id of taskOrder) await runTask(id)
 }
 
 export const concurrentExecutor = async <W extends UnknownWorkflowDefinition>({
   taskOrder,
-  tracker,
-  context,
-  tasks,
+  getTask,
+  runTask,
 }: Parameters<WorkflowExecutor<W>>[0]) => {
   const promises = new Map<TaskId<W>, Promise<void>>()
 
+  const depPromises = (id: TaskId<W>) =>
+    getTask(id)!.dependencies.map((dep) => promises.get(dep))
+
+  const waitForDepsThenRun = async (id: TaskId<W>) => {
+    await Promise.all(depPromises(id))
+    await runTask(id)
+  }
+
   for (const id of taskOrder) {
-    const promise = (async () => {
-      await Promise.all(
-        tasks.get(id)!.dependencies.map((dep) => promises.get(dep)),
-      )
-      return await runTask(id, { tracker, context, tasks })
-    })()
+    const promise = waitForDepsThenRun(id)
     promises.set(id, promise)
   }
 

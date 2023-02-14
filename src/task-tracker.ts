@@ -65,7 +65,3 @@ export const taskTracker = <W extends UnknownWorkflowDefinition>(
     }),
   }
 }
-
-export type TaskTracker<W extends UnknownWorkflowDefinition> = ReturnType<
-  typeof taskTracker<W>
->
