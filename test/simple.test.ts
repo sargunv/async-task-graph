@@ -138,250 +138,68 @@ describe.each([`serial`, `concurrent`] as const)(
       {
         description: `no failed tasks`,
         tasks: ALL_TASKS,
-        context: { hello: `world` },
-        taskOrder: [`foo`, `bar`, `baz`],
-        workflowStartEvent: {
-          context: { hello: `world` },
-        },
-        taskStartEvents: [{ id: `foo` }, { id: `bar` }, { id: `baz` }],
-        taskFinishEvents: [
-          { id: `foo`, result: `{"hello":"world"}` },
-          { id: `bar`, result: 17 },
-          { id: `baz`, result: undefined },
-        ],
-        taskThrowEvents: [],
-        taskSkipEvents: [],
-        workflowFinishEvent: {
-          tasksFinished: [`foo`, `bar`, `baz`],
-          tasksErrored: [],
-          tasksSkipped: [],
-        },
       },
       {
         description: `a failed task at the start`,
         tasks: [badFooTask, barTask, bazTask],
-        context: { hello: `world` },
-        taskOrder: [`foo`, `bar`, `baz`],
-        taskStartEvents: [{ id: `foo` }],
-        taskFinishEvents: [],
-        taskThrowEvents: [{ id: `foo`, error: new Error(`foo error`) }],
-        taskSkipEvents: [
-          {
-            id: `bar`,
-            erroredDependencies: [`foo`],
-            skippedDependencies: [],
-          },
-          {
-            id: `baz`,
-            erroredDependencies: [],
-            skippedDependencies: [`bar`],
-          },
-        ],
-        workflowStartEvent: {
-          context: { hello: `world` },
-        },
-        workflowFinishEvent: {
-          tasksFinished: [],
-          tasksErrored: [`foo`],
-          tasksSkipped: [`bar`, `baz`],
-        },
       },
       {
         description: `a failed task in the middle`,
         tasks: [fooTask, badBarTask, bazTask],
-        context: { hello: `world` },
-        taskOrder: [`foo`, `bar`, `baz`],
-        taskStartEvents: [{ id: `foo` }, { id: `bar` }],
-        taskFinishEvents: [{ id: `foo`, result: `{"hello":"world"}` }],
-        taskThrowEvents: [{ id: `bar`, error: new Error(`bar error`) }],
-        taskSkipEvents: [
-          {
-            id: `baz`,
-            erroredDependencies: [`bar`],
-            skippedDependencies: [],
-          },
-        ],
-        workflowStartEvent: {
-          context: { hello: `world` },
-        },
-        workflowFinishEvent: {
-          tasksFinished: [`foo`],
-          tasksErrored: [`bar`],
-          tasksSkipped: [`baz`],
-        },
       },
       {
         description: `a failed task at the end`,
         tasks: [fooTask, barTask, badBazTask],
-        context: { hello: `world` },
-        taskOrder: [`foo`, `bar`, `baz`],
-        taskStartEvents: [{ id: `foo` }, { id: `bar` }, { id: `baz` }],
-        taskFinishEvents: [
-          { id: `foo`, result: `{"hello":"world"}` },
-          { id: `bar`, result: 17 },
-        ],
-        taskThrowEvents: [{ id: `baz`, error: new Error(`baz error`) }],
-        taskSkipEvents: [],
-        workflowStartEvent: {
-          context: { hello: `world` },
-        },
-        workflowFinishEvent: {
-          tasksFinished: [`foo`, `bar`],
-          tasksErrored: [`baz`],
-          tasksSkipped: [],
-        },
       },
       {
         description: `the first task selected`,
         tasks: ALL_TASKS,
-        context: { hello: `world` },
         selectedTasks: [`foo`],
-        taskOrder: [`foo`],
-        workflowStartEvent: {
-          context: { hello: `world` },
-        },
-        taskStartEvents: [{ id: `foo` }],
-        taskFinishEvents: [{ id: `foo`, result: `{"hello":"world"}` }],
-        taskThrowEvents: [],
-        taskSkipEvents: [],
-        workflowFinishEvent: {
-          tasksFinished: [`foo`],
-          tasksErrored: [],
-          tasksSkipped: [],
-        },
       },
       {
         description: `the second task selected`,
         tasks: ALL_TASKS,
-        context: { hello: `world` },
         selectedTasks: [`bar`],
-        taskOrder: [`foo`, `bar`],
-        workflowStartEvent: {
-          context: { hello: `world` },
-        },
-        taskStartEvents: [{ id: `foo` }, { id: `bar` }],
-        taskFinishEvents: [
-          { id: `foo`, result: `{"hello":"world"}` },
-          { id: `bar`, result: 17 },
-        ],
-        taskThrowEvents: [],
-        taskSkipEvents: [],
-        workflowFinishEvent: {
-          tasksFinished: [`foo`, `bar`],
-          tasksErrored: [],
-          tasksSkipped: [],
-        },
       },
       {
-        description: `the second task selected and a failed task at the start`,
+        description: `the second task selected and a failed dependency`,
         tasks: [badFooTask, barTask, bazTask],
-        context: { hello: `world` },
         selectedTasks: [`bar`],
-        taskOrder: [`foo`, `bar`],
-        workflowStartEvent: {
-          context: { hello: `world` },
-        },
-        taskStartEvents: [{ id: `foo` }],
-        taskFinishEvents: [],
-        taskThrowEvents: [{ id: `foo`, error: new Error(`foo error`) }],
-        taskSkipEvents: [
-          {
-            id: `bar`,
-            erroredDependencies: [`foo`],
-            skippedDependencies: [],
-          },
-        ],
-        workflowFinishEvent: {
-          tasksFinished: [],
-          tasksErrored: [`foo`],
-          tasksSkipped: [`bar`],
-        },
       },
       {
         description: `a task that throws a non-error`,
         tasks: [fooTask, barTask, weirdBadBazTask],
-        context: { hello: `world` },
-        taskOrder: [`foo`, `bar`, `baz`],
-        taskStartEvents: [{ id: `foo` }, { id: `bar` }, { id: `baz` }],
-        taskFinishEvents: [
-          { id: `foo`, result: `{"hello":"world"}` },
-          { id: `bar`, result: 17 },
-        ],
-        taskThrowEvents: [
-          { id: `baz`, error: new Error(`unknown error: weird baz error`) },
-        ],
-        taskSkipEvents: [],
-        workflowStartEvent: {
-          context: { hello: `world` },
-        },
-        workflowFinishEvent: {
-          tasksFinished: [`foo`, `bar`],
-          tasksErrored: [`baz`],
-          tasksSkipped: [],
-        },
       },
-    ])(
-      `executes with $description`,
-      async ({
-        tasks,
-        context,
-        workflowStartEvent,
-        taskStartEvents,
-        taskFinishEvents,
-        taskThrowEvents,
-        taskSkipEvents,
-        workflowFinishEvent,
-        selectedTasks,
-      }) => {
-        const wfBuilder = workflowBuilder<SimpleWorkflow>()
-        for (const task of tasks) wfBuilder.addTask(task)
+    ])(`executes with $description`, async ({ tasks, selectedTasks }) => {
+      const wfBuilder = workflowBuilder<SimpleWorkflow>()
+      for (const task of tasks) wfBuilder.addTask(task)
 
-        // eslint-disable-next-line security/detect-object-injection
-        const { emitter, runWorkflow, taskOrder } = wfBuilder[executor]({
-          selectedTasks: selectedTasks as SimpleTaskId[] | undefined,
-        })
+      // eslint-disable-next-line security/detect-object-injection
+      const { emitter, runWorkflow, taskOrder } = wfBuilder[executor]({
+        selectedTasks: selectedTasks as SimpleTaskId[] | undefined,
+      })
 
-        expect(taskOrder).toEqual(taskOrder)
+      expect(taskOrder).toMatchSnapshot(`taskOrder`)
 
-        const workflowStartFn = vi.fn()
-        const taskStartFn = vi.fn()
-        const taskFinishFn = vi.fn()
-        const taskThrowFn = vi.fn()
-        const taskSkipFn = vi.fn()
-        const workflowFinishFn = vi.fn()
+      const events: { name: string; event: unknown }[] = []
+      const eventFn = (name: string) => (event: unknown) => {
+        events.push({ name, event })
+      }
 
-        emitter.on(`workflowStart`, workflowStartFn)
-        emitter.on(`taskStart`, taskStartFn)
-        emitter.on(`taskFinish`, taskFinishFn)
-        emitter.on(`taskThrow`, taskThrowFn)
-        emitter.on(`taskSkip`, taskSkipFn)
-        emitter.on(`workflowFinish`, workflowFinishFn)
+      emitter.on(`workflowStart`, eventFn(`workflowStart`))
+      emitter.on(`taskStart`, eventFn(`taskStart`))
+      emitter.on(`taskFinish`, eventFn(`taskFinish`))
+      emitter.on(`taskThrow`, eventFn(`taskThrow`))
+      emitter.on(`taskSkip`, eventFn(`taskSkip`))
+      emitter.on(`workflowFinish`, eventFn(`workflowFinish`))
 
-        const result = await runWorkflow(context)
+      const result = await runWorkflow({ hello: `world` })
 
-        expect(workflowStartFn).toHaveBeenCalledOnce()
-        expect(workflowStartFn).toHaveBeenCalledWith(workflowStartEvent)
+      expect(events).toMatchSnapshot(`events`)
 
-        expect(taskStartFn).toHaveBeenCalledTimes(taskStartEvents.length)
-        for (const [i, event] of taskStartEvents.entries())
-          expect(taskStartFn).toHaveBeenNthCalledWith(i + 1, event)
-
-        expect(taskFinishFn).toHaveBeenCalledTimes(taskFinishEvents.length)
-        for (const [i, event] of taskFinishEvents.entries())
-          expect(taskFinishFn).toHaveBeenNthCalledWith(i + 1, event)
-
-        expect(taskThrowFn).toHaveBeenCalledTimes(taskThrowEvents.length)
-        for (const [i, event] of taskThrowEvents.entries())
-          expect(taskThrowFn).toHaveBeenNthCalledWith(i + 1, event)
-
-        expect(taskSkipFn).toHaveBeenCalledTimes(taskSkipEvents.length)
-        for (const [i, event] of taskSkipEvents.entries())
-          expect(taskSkipFn).toHaveBeenNthCalledWith(i + 1, event)
-
-        expect(workflowFinishFn).toHaveBeenCalledOnce()
-        expect(workflowFinishFn).toHaveBeenCalledWith(workflowFinishEvent)
-        expect(result).toEqual(workflowFinishEvent)
-      },
-    )
+      expect(result).toMatchObject(
+        events.find((e) => e.name === `workflowFinish`)!.event as object,
+      )
+    })
   },
 )
