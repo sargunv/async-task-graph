@@ -41,5 +41,5 @@ export interface TaskRunContext<
 export interface Workflow<W extends UnknownWorkflowDefinition> {
   taskOrder: TaskId<W>[]
   emitter: EventSource<WorkflowEvents<W>>
-  run: (context: W[`context`]) => Promise<WorkflowFinishArgs<W>>
+  runWorkflow: (context: W[`context`]) => Promise<WorkflowFinishArgs<W>>
 }

@@ -48,7 +48,7 @@ const serialWorkflow = <W extends UnknownWorkflowDefinition>(
 
   const emitter = typedEmitter<WorkflowEvents<W>>()
 
-  const run = async (context: W[`context`]) => {
+  const runWorkflow = async (context: W[`context`]) => {
     Object.freeze(context)
 
     emitter.emit(`workflowStart`, { context })
@@ -61,7 +61,7 @@ const serialWorkflow = <W extends UnknownWorkflowDefinition>(
     return summary
   }
 
-  return { taskOrder, emitter, run }
+  return { taskOrder, emitter, runWorkflow }
 }
 
 const concurrentWorkflow = <W extends UnknownWorkflowDefinition>(
@@ -73,7 +73,7 @@ const concurrentWorkflow = <W extends UnknownWorkflowDefinition>(
 
   const emitter = typedEmitter<WorkflowEvents<W>>()
 
-  const run = async (context: W[`context`]) => {
+  const runWorkflow = async (context: W[`context`]) => {
     Object.freeze(context)
 
     emitter.emit(`workflowStart`, { context })
@@ -98,5 +98,5 @@ const concurrentWorkflow = <W extends UnknownWorkflowDefinition>(
     return summary
   }
 
-  return { taskOrder, emitter, run }
+  return { taskOrder, emitter, runWorkflow }
 }

@@ -83,13 +83,13 @@ describe(`a task with undeclared dependencies`, () => {
     for (const task of [badFooTask, barTask, undeclaredBazTask])
       wfBuilder.addTask(task)
 
-    const { emitter, run } = wfBuilder.serialWorkflow()
+    const { emitter, runWorkflow } = wfBuilder.serialWorkflow()
 
     const throwFn = vi.fn()
     emitter.on(`taskThrow`, throwFn)
 
     await expect(() =>
-      run({ hello: `world` }),
+      runWorkflow({ hello: `world` }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
       `"Requested result for skipped task bar. Did you remember to declare it as a dependency?"`,
     )
@@ -100,13 +100,13 @@ describe(`a task with undeclared dependencies`, () => {
     for (const task of [fooTask, badBarTask, undeclaredBazTask])
       wfBuilder.addTask(task)
 
-    const { emitter, run } = wfBuilder.serialWorkflow()
+    const { emitter, runWorkflow } = wfBuilder.serialWorkflow()
 
     const throwFn = vi.fn()
     emitter.on(`taskThrow`, throwFn)
 
     await expect(() =>
-      run({ hello: `world` }),
+      runWorkflow({ hello: `world` }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
       `"Requested result for errored task bar. Did you remember to declare it as a dependency?"`,
     )
@@ -117,13 +117,13 @@ describe(`a task with undeclared dependencies`, () => {
     for (const task of [undeclaredBazTask, fooTask, barTask])
       wfBuilder.addTask(task)
 
-    const { emitter, run } = wfBuilder.serialWorkflow()
+    const { emitter, runWorkflow } = wfBuilder.serialWorkflow()
 
     const throwFn = vi.fn()
     emitter.on(`taskThrow`, throwFn)
 
     await expect(() =>
-      run({ hello: `world` }),
+      runWorkflow({ hello: `world` }),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
       `"Requested result for task bar before it finished. Did you remember to declare it as a dependency?"`,
     )
@@ -337,7 +337,7 @@ describe.each([`serial`, `concurrent`] as const)(
         for (const task of tasks) wfBuilder.addTask(task)
 
         // eslint-disable-next-line security/detect-object-injection
-        const { emitter, run, taskOrder } = wfBuilder[executor]({
+        const { emitter, runWorkflow, taskOrder } = wfBuilder[executor]({
           selectedTasks: selectedTasks as SimpleTaskId[] | undefined,
         })
 
@@ -357,7 +357,7 @@ describe.each([`serial`, `concurrent`] as const)(
         emitter.on(`taskSkip`, taskSkipFn)
         emitter.on(`workflowFinish`, workflowFinishFn)
 
-        const result = await run(context)
+        const result = await runWorkflow(context)
 
         expect(workflowStartFn).toHaveBeenCalledOnce()
         expect(workflowStartFn).toHaveBeenCalledWith(workflowStartEvent)
