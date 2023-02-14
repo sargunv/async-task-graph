@@ -1,6 +1,11 @@
 import { Task, TaskId, UnknownWorkflowDefinition } from "./core-types.js"
 
-export { workflowBuilder } from "./workflow.js"
+export {
+  concurrentExecutor,
+  serialExecutor,
+  workflowBuilder,
+  type WorkflowExecutor,
+} from "./workflow.js"
 
 export type WorkflowDefinition<W extends UnknownWorkflowDefinition> = W
 
