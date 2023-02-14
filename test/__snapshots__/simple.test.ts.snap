@@ -1,6 +1,6 @@
 // Vitest Snapshot v1
 
-exports[`a linear concurrent workflow > executes with 'a failed task at the end' > events 1`] = `
+exports[`a linear concurrent workflow > executes with a failed task at the end > events 1`] = `
 [
   {
     "event": {
@@ -65,7 +65,7 @@ exports[`a linear concurrent workflow > executes with 'a failed task at the end'
 ]
 `;
 
-exports[`a linear concurrent workflow > executes with 'a failed task at the end' > taskOrder 1`] = `
+exports[`a linear concurrent workflow > executes with a failed task at the end > taskOrder 1`] = `
 [
   "foo",
   "bar",
@@ -73,7 +73,7 @@ exports[`a linear concurrent workflow > executes with 'a failed task at the end'
 ]
 `;
 
-exports[`a linear concurrent workflow > executes with 'a failed task at the start' > events 1`] = `
+exports[`a linear concurrent workflow > executes with a failed task at the start > events 1`] = `
 [
   {
     "event": {
@@ -132,7 +132,7 @@ exports[`a linear concurrent workflow > executes with 'a failed task at the star
 ]
 `;
 
-exports[`a linear concurrent workflow > executes with 'a failed task at the start' > taskOrder 1`] = `
+exports[`a linear concurrent workflow > executes with a failed task at the start > taskOrder 1`] = `
 [
   "foo",
   "bar",
@@ -140,7 +140,7 @@ exports[`a linear concurrent workflow > executes with 'a failed task at the star
 ]
 `;
 
-exports[`a linear concurrent workflow > executes with 'a failed task in the middle' > events 1`] = `
+exports[`a linear concurrent workflow > executes with a failed task in the middle > events 1`] = `
 [
   {
     "event": {
@@ -203,7 +203,7 @@ exports[`a linear concurrent workflow > executes with 'a failed task in the midd
 ]
 `;
 
-exports[`a linear concurrent workflow > executes with 'a failed task in the middle' > taskOrder 1`] = `
+exports[`a linear concurrent workflow > executes with a failed task in the middle > taskOrder 1`] = `
 [
   "foo",
   "bar",
@@ -211,7 +211,7 @@ exports[`a linear concurrent workflow > executes with 'a failed task in the midd
 ]
 `;
 
-exports[`a linear concurrent workflow > executes with 'a task that throws a non-error' > events 1`] = `
+exports[`a linear concurrent workflow > executes with a task that throws a non-error > events 1`] = `
 [
   {
     "event": {
@@ -276,7 +276,7 @@ exports[`a linear concurrent workflow > executes with 'a task that throws a non-
 ]
 `;
 
-exports[`a linear concurrent workflow > executes with 'a task that throws a non-error' > taskOrder 1`] = `
+exports[`a linear concurrent workflow > executes with a task that throws a non-error > taskOrder 1`] = `
 [
   "foo",
   "bar",
@@ -284,7 +284,7 @@ exports[`a linear concurrent workflow > executes with 'a task that throws a non-
 ]
 `;
 
-exports[`a linear concurrent workflow > executes with 'no failed tasks' > events 1`] = `
+exports[`a linear concurrent workflow > executes with no failed tasks > events 1`] = `
 [
   {
     "event": {
@@ -348,7 +348,7 @@ exports[`a linear concurrent workflow > executes with 'no failed tasks' > events
 ]
 `;
 
-exports[`a linear concurrent workflow > executes with 'no failed tasks' > taskOrder 1`] = `
+exports[`a linear concurrent workflow > executes with no failed tasks > taskOrder 1`] = `
 [
   "foo",
   "bar",
@@ -356,7 +356,7 @@ exports[`a linear concurrent workflow > executes with 'no failed tasks' > taskOr
 ]
 `;
 
-exports[`a linear concurrent workflow > executes with 'the first task selected' > events 1`] = `
+exports[`a linear concurrent workflow > executes with the first task selected > events 1`] = `
 [
   {
     "event": {
@@ -392,68 +392,13 @@ exports[`a linear concurrent workflow > executes with 'the first task selected' 
 ]
 `;
 
-exports[`a linear concurrent workflow > executes with 'the first task selected' > taskOrder 1`] = `
+exports[`a linear concurrent workflow > executes with the first task selected > taskOrder 1`] = `
 [
   "foo",
 ]
 `;
 
-exports[`a linear concurrent workflow > executes with 'the second task selected and a failed…' > events 1`] = `
-[
-  {
-    "event": {
-      "context": {
-        "hello": "world",
-      },
-    },
-    "name": "workflowStart",
-  },
-  {
-    "event": {
-      "id": "foo",
-    },
-    "name": "taskStart",
-  },
-  {
-    "event": {
-      "error": [Error: foo error],
-      "id": "foo",
-    },
-    "name": "taskThrow",
-  },
-  {
-    "event": {
-      "erroredDependencies": [
-        "foo",
-      ],
-      "id": "bar",
-      "skippedDependencies": [],
-    },
-    "name": "taskSkip",
-  },
-  {
-    "event": {
-      "tasksErrored": [
-        "foo",
-      ],
-      "tasksFinished": [],
-      "tasksSkipped": [
-        "bar",
-      ],
-    },
-    "name": "workflowFinish",
-  },
-]
-`;
-
-exports[`a linear concurrent workflow > executes with 'the second task selected and a failed…' > taskOrder 1`] = `
-[
-  "foo",
-  "bar",
-]
-`;
-
-exports[`a linear concurrent workflow > executes with 'the second task selected' > events 1`] = `
+exports[`a linear concurrent workflow > executes with the second task selected > events 1`] = `
 [
   {
     "event": {
@@ -503,14 +448,69 @@ exports[`a linear concurrent workflow > executes with 'the second task selected'
 ]
 `;
 
-exports[`a linear concurrent workflow > executes with 'the second task selected' > taskOrder 1`] = `
+exports[`a linear concurrent workflow > executes with the second task selected > taskOrder 1`] = `
 [
   "foo",
   "bar",
 ]
 `;
 
-exports[`a linear serial workflow > executes with 'a failed task at the end' > events 1`] = `
+exports[`a linear concurrent workflow > executes with the second task selected and a failed dependency > events 1`] = `
+[
+  {
+    "event": {
+      "context": {
+        "hello": "world",
+      },
+    },
+    "name": "workflowStart",
+  },
+  {
+    "event": {
+      "id": "foo",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "error": [Error: foo error],
+      "id": "foo",
+    },
+    "name": "taskThrow",
+  },
+  {
+    "event": {
+      "erroredDependencies": [
+        "foo",
+      ],
+      "id": "bar",
+      "skippedDependencies": [],
+    },
+    "name": "taskSkip",
+  },
+  {
+    "event": {
+      "tasksErrored": [
+        "foo",
+      ],
+      "tasksFinished": [],
+      "tasksSkipped": [
+        "bar",
+      ],
+    },
+    "name": "workflowFinish",
+  },
+]
+`;
+
+exports[`a linear concurrent workflow > executes with the second task selected and a failed dependency > taskOrder 1`] = `
+[
+  "foo",
+  "bar",
+]
+`;
+
+exports[`a linear serial workflow > executes with a failed task at the end > events 1`] = `
 [
   {
     "event": {
@@ -575,7 +575,7 @@ exports[`a linear serial workflow > executes with 'a failed task at the end' > e
 ]
 `;
 
-exports[`a linear serial workflow > executes with 'a failed task at the end' > taskOrder 1`] = `
+exports[`a linear serial workflow > executes with a failed task at the end > taskOrder 1`] = `
 [
   "foo",
   "bar",
@@ -583,7 +583,7 @@ exports[`a linear serial workflow > executes with 'a failed task at the end' > t
 ]
 `;
 
-exports[`a linear serial workflow > executes with 'a failed task at the start' > events 1`] = `
+exports[`a linear serial workflow > executes with a failed task at the start > events 1`] = `
 [
   {
     "event": {
@@ -642,7 +642,7 @@ exports[`a linear serial workflow > executes with 'a failed task at the start' >
 ]
 `;
 
-exports[`a linear serial workflow > executes with 'a failed task at the start' > taskOrder 1`] = `
+exports[`a linear serial workflow > executes with a failed task at the start > taskOrder 1`] = `
 [
   "foo",
   "bar",
@@ -650,7 +650,7 @@ exports[`a linear serial workflow > executes with 'a failed task at the start' >
 ]
 `;
 
-exports[`a linear serial workflow > executes with 'a failed task in the middle' > events 1`] = `
+exports[`a linear serial workflow > executes with a failed task in the middle > events 1`] = `
 [
   {
     "event": {
@@ -713,7 +713,7 @@ exports[`a linear serial workflow > executes with 'a failed task in the middle' 
 ]
 `;
 
-exports[`a linear serial workflow > executes with 'a failed task in the middle' > taskOrder 1`] = `
+exports[`a linear serial workflow > executes with a failed task in the middle > taskOrder 1`] = `
 [
   "foo",
   "bar",
@@ -721,7 +721,7 @@ exports[`a linear serial workflow > executes with 'a failed task in the middle' 
 ]
 `;
 
-exports[`a linear serial workflow > executes with 'a task that throws a non-error' > events 1`] = `
+exports[`a linear serial workflow > executes with a task that throws a non-error > events 1`] = `
 [
   {
     "event": {
@@ -786,7 +786,7 @@ exports[`a linear serial workflow > executes with 'a task that throws a non-erro
 ]
 `;
 
-exports[`a linear serial workflow > executes with 'a task that throws a non-error' > taskOrder 1`] = `
+exports[`a linear serial workflow > executes with a task that throws a non-error > taskOrder 1`] = `
 [
   "foo",
   "bar",
@@ -794,7 +794,7 @@ exports[`a linear serial workflow > executes with 'a task that throws a non-erro
 ]
 `;
 
-exports[`a linear serial workflow > executes with 'no failed tasks' > events 1`] = `
+exports[`a linear serial workflow > executes with no failed tasks > events 1`] = `
 [
   {
     "event": {
@@ -858,7 +858,7 @@ exports[`a linear serial workflow > executes with 'no failed tasks' > events 1`]
 ]
 `;
 
-exports[`a linear serial workflow > executes with 'no failed tasks' > taskOrder 1`] = `
+exports[`a linear serial workflow > executes with no failed tasks > taskOrder 1`] = `
 [
   "foo",
   "bar",
@@ -866,7 +866,7 @@ exports[`a linear serial workflow > executes with 'no failed tasks' > taskOrder 
 ]
 `;
 
-exports[`a linear serial workflow > executes with 'the first task selected' > events 1`] = `
+exports[`a linear serial workflow > executes with the first task selected > events 1`] = `
 [
   {
     "event": {
@@ -902,68 +902,13 @@ exports[`a linear serial workflow > executes with 'the first task selected' > ev
 ]
 `;
 
-exports[`a linear serial workflow > executes with 'the first task selected' > taskOrder 1`] = `
+exports[`a linear serial workflow > executes with the first task selected > taskOrder 1`] = `
 [
   "foo",
 ]
 `;
 
-exports[`a linear serial workflow > executes with 'the second task selected and a failed…' > events 1`] = `
-[
-  {
-    "event": {
-      "context": {
-        "hello": "world",
-      },
-    },
-    "name": "workflowStart",
-  },
-  {
-    "event": {
-      "id": "foo",
-    },
-    "name": "taskStart",
-  },
-  {
-    "event": {
-      "error": [Error: foo error],
-      "id": "foo",
-    },
-    "name": "taskThrow",
-  },
-  {
-    "event": {
-      "erroredDependencies": [
-        "foo",
-      ],
-      "id": "bar",
-      "skippedDependencies": [],
-    },
-    "name": "taskSkip",
-  },
-  {
-    "event": {
-      "tasksErrored": [
-        "foo",
-      ],
-      "tasksFinished": [],
-      "tasksSkipped": [
-        "bar",
-      ],
-    },
-    "name": "workflowFinish",
-  },
-]
-`;
-
-exports[`a linear serial workflow > executes with 'the second task selected and a failed…' > taskOrder 1`] = `
-[
-  "foo",
-  "bar",
-]
-`;
-
-exports[`a linear serial workflow > executes with 'the second task selected' > events 1`] = `
+exports[`a linear serial workflow > executes with the second task selected > events 1`] = `
 [
   {
     "event": {
@@ -1013,7 +958,62 @@ exports[`a linear serial workflow > executes with 'the second task selected' > e
 ]
 `;
 
-exports[`a linear serial workflow > executes with 'the second task selected' > taskOrder 1`] = `
+exports[`a linear serial workflow > executes with the second task selected > taskOrder 1`] = `
+[
+  "foo",
+  "bar",
+]
+`;
+
+exports[`a linear serial workflow > executes with the second task selected and a failed dependency > events 1`] = `
+[
+  {
+    "event": {
+      "context": {
+        "hello": "world",
+      },
+    },
+    "name": "workflowStart",
+  },
+  {
+    "event": {
+      "id": "foo",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "error": [Error: foo error],
+      "id": "foo",
+    },
+    "name": "taskThrow",
+  },
+  {
+    "event": {
+      "erroredDependencies": [
+        "foo",
+      ],
+      "id": "bar",
+      "skippedDependencies": [],
+    },
+    "name": "taskSkip",
+  },
+  {
+    "event": {
+      "tasksErrored": [
+        "foo",
+      ],
+      "tasksFinished": [],
+      "tasksSkipped": [
+        "bar",
+      ],
+    },
+    "name": "workflowFinish",
+  },
+]
+`;
+
+exports[`a linear serial workflow > executes with the second task selected and a failed dependency > taskOrder 1`] = `
 [
   "foo",
   "bar",

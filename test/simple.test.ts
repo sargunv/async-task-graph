@@ -135,42 +135,27 @@ describe.each([`serial`, `concurrent`] as const)(
   (type) => {
     const executor = `${type}Workflow` as const
     it.each([
-      {
-        description: `no failed tasks`,
-        tasks: ALL_TASKS,
-      },
-      {
-        description: `a failed task at the start`,
-        tasks: [badFooTask, barTask, bazTask],
-      },
-      {
-        description: `a failed task in the middle`,
-        tasks: [fooTask, badBarTask, bazTask],
-      },
-      {
-        description: `a failed task at the end`,
-        tasks: [fooTask, barTask, badBazTask],
-      },
-      {
-        description: `the first task selected`,
-        tasks: ALL_TASKS,
-        selectedTasks: [`foo`],
-      },
-      {
-        description: `the second task selected`,
-        tasks: ALL_TASKS,
-        selectedTasks: [`bar`],
-      },
-      {
-        description: `the second task selected and a failed dependency`,
-        tasks: [badFooTask, barTask, bazTask],
-        selectedTasks: [`bar`],
-      },
-      {
-        description: `a task that throws a non-error`,
-        tasks: [fooTask, barTask, weirdBadBazTask],
-      },
-    ])(`executes with $description`, async ({ tasks, selectedTasks }) => {
+      [`no failed tasks`, ALL_TASKS, undefined],
+      [`a failed task at the start`, [badFooTask, barTask, bazTask], undefined],
+      [
+        `a failed task in the middle`,
+        [fooTask, badBarTask, bazTask],
+        undefined,
+      ],
+      [`a failed task at the end`, [fooTask, barTask, badBazTask], undefined],
+      [`the first task selected`, ALL_TASKS, [`foo`]],
+      [`the second task selected`, ALL_TASKS, [`bar`]],
+      [
+        `the second task selected and a failed dependency`,
+        [badFooTask, barTask, bazTask],
+        [`bar`],
+      ],
+      [
+        `a task that throws a non-error`,
+        [fooTask, barTask, weirdBadBazTask],
+        undefined,
+      ],
+    ])(`executes with %s`, async (_s, tasks, selectedTasks) => {
       const wfBuilder = workflowBuilder<SimpleWorkflow>()
       for (const task of tasks) wfBuilder.addTask(task)
 
