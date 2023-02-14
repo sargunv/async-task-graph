@@ -32,6 +32,9 @@
       "@sargunv/eslint-config/mixins/commonjs",
       "@sargunv/eslint-config/mixins/typescript"
     ],
+    "ignorePatterns": [
+      "coverage"
+    ],
     "root": true
   },
   "dependencies": {

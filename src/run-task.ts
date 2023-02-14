@@ -3,6 +3,7 @@ import type {
   TaskId,
   UnknownWorkflowDefinition,
 } from "./core-types.js"
+import { WorkflowError } from "./errors.js"
 import { taskTracker } from "./task-tracker.js"
 
 export const runTask = async <W extends UnknownWorkflowDefinition>(
@@ -35,6 +36,7 @@ export const runTask = async <W extends UnknownWorkflowDefinition>(
       })
       tracker.finish(id, result)
     } catch (error) {
+      if (error instanceof WorkflowError) throw error
       tracker.error(id, error)
     }
   }

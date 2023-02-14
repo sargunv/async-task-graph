@@ -11,6 +11,8 @@ import {
   fooTask,
   SimpleTaskId,
   SimpleWorkflow,
+  undeclaredBazTask,
+  weirdBadBazTask,
 } from "./helpers/simple.js"
 
 describe(`a workflow builder`, () => {
@@ -75,8 +77,61 @@ describe(`a workflow builder`, () => {
   })
 })
 
+describe(`a task with undeclared dependencies`, () => {
+  it(`errors when the dependency was skipped`, async () => {
+    const wfBuilder = workflowBuilder<SimpleWorkflow>()
+    for (const task of [badFooTask, barTask, undeclaredBazTask])
+      wfBuilder.addTask(task)
+
+    const { emitter, run } = wfBuilder.serialWorkflow()
+
+    const throwFn = vi.fn()
+    emitter.on(`taskThrow`, throwFn)
+
+    await expect(() =>
+      run({ hello: `world` }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `"Requested result for skipped task bar. Did you remember to declare it as a dependency?"`,
+    )
+  })
+
+  it(`errors when the dependency errored`, async () => {
+    const wfBuilder = workflowBuilder<SimpleWorkflow>()
+    for (const task of [fooTask, badBarTask, undeclaredBazTask])
+      wfBuilder.addTask(task)
+
+    const { emitter, run } = wfBuilder.serialWorkflow()
+
+    const throwFn = vi.fn()
+    emitter.on(`taskThrow`, throwFn)
+
+    await expect(() =>
+      run({ hello: `world` }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `"Requested result for errored task bar. Did you remember to declare it as a dependency?"`,
+    )
+  })
+
+  it(`errors when the dependency never ran`, async () => {
+    const wfBuilder = workflowBuilder<SimpleWorkflow>()
+    for (const task of [undeclaredBazTask, fooTask, barTask])
+      wfBuilder.addTask(task)
+
+    const { emitter, run } = wfBuilder.serialWorkflow()
+
+    const throwFn = vi.fn()
+    emitter.on(`taskThrow`, throwFn)
+
+    await expect(() =>
+      run({ hello: `world` }),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `"Requested result for task bar before it finished. Did you remember to declare it as a dependency?"`,
+    )
+  })
+})
+
 describe.each([`serial`, `concurrent`] as const)(
-  `a linear %s workflow with no errors`,
+  `a linear %s workflow`,
   (type) => {
     const executor = `${type}Workflow` as const
     it.each([
@@ -242,8 +297,31 @@ describe.each([`serial`, `concurrent`] as const)(
           tasksSkipped: [`bar`],
         },
       },
+      {
+        description: `a task that throws a non-error`,
+        tasks: [fooTask, barTask, weirdBadBazTask],
+        context: { hello: `world` },
+        taskOrder: [`foo`, `bar`, `baz`],
+        taskStartEvents: [{ id: `foo` }, { id: `bar` }, { id: `baz` }],
+        taskFinishEvents: [
+          { id: `foo`, result: `{"hello":"world"}` },
+          { id: `bar`, result: 17 },
+        ],
+        taskThrowEvents: [
+          { id: `baz`, error: new Error(`unknown error: weird baz error`) },
+        ],
+        taskSkipEvents: [],
+        workflowStartEvent: {
+          context: { hello: `world` },
+        },
+        workflowFinishEvent: {
+          tasksFinished: [`foo`, `bar`],
+          tasksErrored: [`baz`],
+          tasksSkipped: [],
+        },
+      },
     ])(
-      `executes a workflow with $description`,
+      `executes with $description`,
       async ({
         tasks,
         context,

@@ -2,4 +2,5 @@ LICENSE
 .yarn/
 .pnp.*
 dist/
+coverage/
 tsconfig.vitest-temp.json

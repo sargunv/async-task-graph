@@ -3,6 +3,7 @@ import type {
   TaskResult,
   UnknownWorkflowDefinition,
 } from "./core-types.js"
+import { WorkflowError } from "./errors.js"
 import { EventSink } from "./event-emitter.js"
 import { TaskEvents } from "./event-types.js"
 
@@ -14,16 +15,24 @@ export const taskTracker = <W extends UnknownWorkflowDefinition>(
   const tasksSkipped = new Set<TaskId<W>>()
 
   return {
-    isFinished: (id: TaskId<W>) => tasksFinished.has(id),
     isErrored: (id: TaskId<W>) => tasksErrored.has(id),
     isSkipped: (id: TaskId<W>) => tasksSkipped.has(id),
     getResult: <Id extends TaskId<W>>(id: Id) => {
-      if (tasksErrored.has(id))
-        throw new Error(`Requested result for errored task ${id}`)
-      if (tasksSkipped.has(id))
-        throw new Error(`Requested result for skipped task ${id}`)
-      if (!tasksFinished.has(id))
-        throw new Error(`Requested result for task ${id} before it finished`)
+      if (tasksErrored.has(id)) {
+        throw new WorkflowError(
+          `Requested result for errored task ${id}. Did you remember to declare it as a dependency?`,
+        )
+      }
+      if (tasksSkipped.has(id)) {
+        throw new WorkflowError(
+          `Requested result for skipped task ${id}. Did you remember to declare it as a dependency?`,
+        )
+      }
+      if (!tasksFinished.has(id)) {
+        throw new WorkflowError(
+          `Requested result for task ${id} before it finished. Did you remember to declare it as a dependency?`,
+        )
+      }
       return tasksFinished.get(id) as TaskResult<W, Id>
     },
     start: (id: TaskId<W>) => emitter.emit(`taskStart`, { id }),
@@ -34,7 +43,10 @@ export const taskTracker = <W extends UnknownWorkflowDefinition>(
     error: (id: TaskId<W>, error: unknown) => {
       emitter.emit(`taskThrow`, {
         id,
-        error: error instanceof Error ? error : new Error(String(error)),
+        error:
+          error instanceof Error
+            ? error
+            : new Error(`unknown error: ${String(error)}`),
       })
       return tasksErrored.add(id)
     },
