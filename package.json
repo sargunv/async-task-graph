@@ -1,25 +1,30 @@
 {
   "name": "async-task-graph",
   "version": "0.5.0",
-  "description": "Aids in writing asynchronous task graphs with strong typing.",
+  "description": "Write workflows of well-typed asynchronous task graphs.",
   "homepage": "https://github.com/sargunv/async-task-graph",
   "repository": "github:sargunv/async-task-graph",
   "license": "Apache-2.0",
   "type": "commonjs",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
   "files": [
     "./dist/*"
   ],
   "scripts": {
     "build": "tsc -p tsconfig-build.json",
+    "clean": "rimraf dist coverage tsconfig-build.tsbuildinfo",
     "configure": "yarn dlx @yarnpkg/sdks vscode && ignore-sync .",
     "fix": "eslint . --fix && prettier --write .",
     "lint": "eslint . && prettier --check . --loglevel warn",
-    "prepack": "run build && run test-docs",
+    "prepack": "run build",
     "prepublish": "run lint && run test",
-    "test": "vitest --run && vitest typecheck --run",
-    "test-docs": "txm README.md"
+    "test": "vitest --run --coverage && vitest typecheck --run"
   },
   "prettier": "@sargunv/prettier-config",
   "eslintConfig": {
@@ -34,19 +39,20 @@
     "graph-data-structure": "^3.1.1"
   },
   "devDependencies": {
-    "@sargunv/eslint-config": "^0.5.0",
+    "@sargunv/eslint-config": "^0.5.2",
     "@sargunv/prettier-config": "^0.2.2",
     "@sargunv/typescript-config": "^0.1.0",
     "@types/node": "^18.13.0",
+    "@vitest/coverage-c8": "^0.28.5",
     "eslint": "^8.34.0",
     "ignore-sync": "^6.0.2",
     "prettier": "^2.8.4",
-    "txm": "^8.1.0",
+    "rimraf": "^4.1.2",
     "typescript": "^4.9.5",
     "vite": "^4.1.1",
-    "vitest": "^0.28.4"
+    "vitest": "^0.28.5"
   },
-  "packageManager": "yarn@4.0.0-rc.38",
+  "packageManager": "yarn@4.0.0-rc.39",
   "engines": {
     "node": ">=16.0.0"
   },

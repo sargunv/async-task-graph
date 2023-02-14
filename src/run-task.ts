@@ -35,8 +35,7 @@ export const runTask = async <W extends UnknownWorkflowDefinition>(
       })
       tracker.finish(id, result)
     } catch (error) {
-      if (error instanceof Error) tracker.error(id, error)
-      else tracker.error(id, new Error(String(error)))
+      tracker.error(id, error)
     }
   }
 }

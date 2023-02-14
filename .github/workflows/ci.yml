@@ -8,10 +8,11 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
+        os: [ubuntu-latest]
         node-version: [16.x, 18.x, 19.x]
 
     steps:
@@ -25,3 +26,5 @@ jobs:
       - run: yarn configure && git diff --exit-code
       - run: yarn prepublish
       - run: yarn prepack
+      - uses: codecov/codecov-action@v3
+        if: matrix.os == 'ubuntu-latest' && matrix.node-version == '18.x'

@@ -31,8 +31,11 @@ export const taskTracker = <W extends UnknownWorkflowDefinition>(
       emitter.emit(`taskFinish`, { id, result })
       return tasksFinished.set(id, result)
     },
-    error: (id: TaskId<W>, error: Error) => {
-      emitter.emit(`taskThrow`, { id, error })
+    error: (id: TaskId<W>, error: unknown) => {
+      emitter.emit(`taskThrow`, {
+        id,
+        error: error instanceof Error ? error : new Error(String(error)),
+      })
       return tasksErrored.add(id)
     },
     skip: (

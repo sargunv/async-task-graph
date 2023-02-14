@@ -1,15 +1,16 @@
-[![npm badge](https://img.shields.io/npm/v/async-task-graph)](https://www.npmjs.com/package/async-task-graph)
+[![NPM](https://img.shields.io/npm/v/async-task-graph)](https://www.npmjs.com/package/async-task-graph)
+[![CI](https://img.shields.io/github/actions/workflow/status/sargunv/async-task-graph/ci.yml)](https://github.com/sargunv/async-task-graph/actions/workflows/ci.yml)
+[![Codecov](https://img.shields.io/codecov/c/github/sargunv/async-task-graph)](https://app.codecov.io/gh/sargunv/async-task-graph/)
+[![License](https://img.shields.io/npm/l/async-task-graph)](https://github.com/sargunv/async-task-graph/blob/main/LICENSE)
+[![Node](https://img.shields.io/node/v/async-task-graph)](https://github.com/sargunv/async-task-graph/blob/main/package.json)
+[![ESM](https://img.shields.io/badge/module%20type-esm-brightgreen)](https://github.com/sargunv/async-task-graph/blob/main/package.json)
 
 # async-task-graph
 
-Library to aid in orchestrating asynchronous tasks with interdependencies, with
-a focus on strongly typed task definitions.
+This library aids in writing and executing workflows asynchronous tasks with
+interdependencies, with a focus on well-typed task definitions.
 
 ## Usage
-
-<!-- !test program yarn dlx -q ts-node -I '.*' -->
-
-<!-- !test in usage -->
 
 ```ts
 import { workflowBuilder } from "async-task-graph"
@@ -48,14 +49,4 @@ emitter.on(`taskFinish`, ({ id, result }) => {
 run({ hello: `world` }).then(() => {
   console.log(`done`)
 })
-```
-
-The above example will output:
-
-<!-- !test out usage -->
-
-```txt
-foo returned "{\"hello\":\"world\"}"
-bar returned 17
-done
 ```

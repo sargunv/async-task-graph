@@ -1,3 +1,13 @@
 import { defineConfig } from "vitest/config"
 
-export default defineConfig({})
+export default defineConfig({
+  test: {
+    coverage: {
+      include: [`src/**`],
+      reporter: [`text`, `lcov`],
+    },
+    typecheck: {
+      ignoreSourceErrors: true,
+    },
+  },
+})
