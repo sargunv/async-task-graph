@@ -46,8 +46,7 @@ jobs:
       matrix:
         node-version: [16.x, 18.x, 19.x]
         include:
-          - os: ubuntu-latest
-            node-version: 18.x
+          - node-version: 18.x
             coverage: true
     steps:
       - uses: actions/checkout@v3
