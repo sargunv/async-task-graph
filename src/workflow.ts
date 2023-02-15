@@ -67,18 +67,16 @@ export type WorkflowExecutor<W extends UnknownWorkflowDefinition> = (input: {
   runTask: (id: TaskId<W>) => Promise<void>
 }) => Promise<void>
 
-export const serialExecutor =
-  () =>
-  async <W extends UnknownWorkflowDefinition>({
-    taskOrder,
-    runTask,
-  }: // eslint-disable-next-line unicorn/consistent-function-scoping
-  Parameters<WorkflowExecutor<W>>[0]) => {
-    for (const id of taskOrder) await runTask(id)
-  }
+const serialExecutorImpl = async <W extends UnknownWorkflowDefinition>({
+  taskOrder,
+  runTask,
+}: Parameters<WorkflowExecutor<W>>[0]) => {
+  for (const id of taskOrder) await runTask(id)
+}
+export const serialExecutor = (_opts: {} = {}) => serialExecutorImpl
 
 export const concurrentExecutor =
-  (limit = Number.POSITIVE_INFINITY) =>
+  (opts: { limit?: number } = {}) =>
   async <W extends UnknownWorkflowDefinition>({
     taskOrder,
     getTask,
@@ -94,7 +92,7 @@ export const concurrentExecutor =
       await runTask(id)
     }
 
-    const limitFn = pLimit(limit)
+    const limitFn = pLimit(opts.limit ?? Number.POSITIVE_INFINITY)
 
     for (const id of taskOrder) {
       const promise = limitFn(() => waitForDepsThenRun(id))
@@ -105,7 +103,7 @@ export const concurrentExecutor =
   }
 
 export const stagedExecutor =
-  (limit = Number.POSITIVE_INFINITY) =>
+  (opts: { limit?: number } = {}) =>
   async <W extends UnknownWorkflowDefinition>({
     taskOrder,
     getTask,
@@ -130,7 +128,7 @@ export const stagedExecutor =
     }
 
     for (const stage of stages) {
-      const limitFn = pLimit(limit)
+      const limitFn = pLimit(opts.limit ?? Number.POSITIVE_INFINITY)
       await Promise.all(stage.map((id) => limitFn(() => runTask(id))))
     }
   }
