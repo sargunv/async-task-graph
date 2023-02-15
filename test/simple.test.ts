@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest"
 import {
   concurrentExecutor,
   serialExecutor,
+  stagedExecutor,
   workflowBuilder,
 } from "../src/index.js"
 import {
@@ -134,12 +135,15 @@ describe(`a task with undeclared dependencies`, () => {
   })
 })
 
-describe.each([`serial`, `concurrent`] as const)(
+describe.each([`serial`, `concurrent`, `staged`] as const)(
   `a linear %s workflow`,
   (type) => {
-    // eslint-disable-next-line security/detect-object-injection
     const executor = (
-      { serial: serialExecutor, concurrent: concurrentExecutor } as const
+      {
+        serial: serialExecutor,
+        concurrent: concurrentExecutor,
+        staged: stagedExecutor,
+      } as const
     )[type]
 
     it.each([

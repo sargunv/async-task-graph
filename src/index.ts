@@ -24,6 +24,7 @@ export type {
 export {
   concurrentExecutor,
   serialExecutor,
+  stagedExecutor,
   workflowBuilder,
   type WorkflowExecutor,
 } from "./workflow.js"

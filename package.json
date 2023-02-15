@@ -33,7 +33,7 @@
     "graph-data-structure": "^3.1.1"
   },
   "devDependencies": {
-    "@sargunv/eslint-config": "^0.5.3",
+    "@sargunv/eslint-config": "^0.5.4",
     "@sargunv/prettier-config": "^0.2.2",
     "@sargunv/typescript-config": "^0.1.0",
     "@types/node": "^18.13.0",

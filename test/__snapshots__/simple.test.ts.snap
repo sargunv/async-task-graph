@@ -1019,3 +1019,513 @@ exports[`a linear serial workflow > executes with the second task selected and a
   "bar",
 ]
 `;
+
+exports[`a linear staged workflow > executes with a failed task at the end > events 1`] = `
+[
+  {
+    "event": {
+      "context": {
+        "hello": "world",
+      },
+    },
+    "name": "workflowStart",
+  },
+  {
+    "event": {
+      "id": "foo",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "id": "foo",
+      "result": "{\\"hello\\":\\"world\\"}",
+    },
+    "name": "taskFinish",
+  },
+  {
+    "event": {
+      "id": "bar",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "id": "bar",
+      "result": 17,
+    },
+    "name": "taskFinish",
+  },
+  {
+    "event": {
+      "id": "baz",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "error": [Error: baz error],
+      "id": "baz",
+    },
+    "name": "taskThrow",
+  },
+  {
+    "event": {
+      "tasksErrored": [
+        "baz",
+      ],
+      "tasksFinished": [
+        "foo",
+        "bar",
+      ],
+      "tasksSkipped": [],
+    },
+    "name": "workflowFinish",
+  },
+]
+`;
+
+exports[`a linear staged workflow > executes with a failed task at the end > taskOrder 1`] = `
+[
+  "foo",
+  "bar",
+  "baz",
+]
+`;
+
+exports[`a linear staged workflow > executes with a failed task at the start > events 1`] = `
+[
+  {
+    "event": {
+      "context": {
+        "hello": "world",
+      },
+    },
+    "name": "workflowStart",
+  },
+  {
+    "event": {
+      "id": "foo",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "error": [Error: foo error],
+      "id": "foo",
+    },
+    "name": "taskThrow",
+  },
+  {
+    "event": {
+      "erroredDependencies": [
+        "foo",
+      ],
+      "id": "bar",
+      "skippedDependencies": [],
+    },
+    "name": "taskSkip",
+  },
+  {
+    "event": {
+      "erroredDependencies": [],
+      "id": "baz",
+      "skippedDependencies": [
+        "bar",
+      ],
+    },
+    "name": "taskSkip",
+  },
+  {
+    "event": {
+      "tasksErrored": [
+        "foo",
+      ],
+      "tasksFinished": [],
+      "tasksSkipped": [
+        "bar",
+        "baz",
+      ],
+    },
+    "name": "workflowFinish",
+  },
+]
+`;
+
+exports[`a linear staged workflow > executes with a failed task at the start > taskOrder 1`] = `
+[
+  "foo",
+  "bar",
+  "baz",
+]
+`;
+
+exports[`a linear staged workflow > executes with a failed task in the middle > events 1`] = `
+[
+  {
+    "event": {
+      "context": {
+        "hello": "world",
+      },
+    },
+    "name": "workflowStart",
+  },
+  {
+    "event": {
+      "id": "foo",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "id": "foo",
+      "result": "{\\"hello\\":\\"world\\"}",
+    },
+    "name": "taskFinish",
+  },
+  {
+    "event": {
+      "id": "bar",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "error": [Error: bar error],
+      "id": "bar",
+    },
+    "name": "taskThrow",
+  },
+  {
+    "event": {
+      "erroredDependencies": [
+        "bar",
+      ],
+      "id": "baz",
+      "skippedDependencies": [],
+    },
+    "name": "taskSkip",
+  },
+  {
+    "event": {
+      "tasksErrored": [
+        "bar",
+      ],
+      "tasksFinished": [
+        "foo",
+      ],
+      "tasksSkipped": [
+        "baz",
+      ],
+    },
+    "name": "workflowFinish",
+  },
+]
+`;
+
+exports[`a linear staged workflow > executes with a failed task in the middle > taskOrder 1`] = `
+[
+  "foo",
+  "bar",
+  "baz",
+]
+`;
+
+exports[`a linear staged workflow > executes with a task that throws a non-error > events 1`] = `
+[
+  {
+    "event": {
+      "context": {
+        "hello": "world",
+      },
+    },
+    "name": "workflowStart",
+  },
+  {
+    "event": {
+      "id": "foo",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "id": "foo",
+      "result": "{\\"hello\\":\\"world\\"}",
+    },
+    "name": "taskFinish",
+  },
+  {
+    "event": {
+      "id": "bar",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "id": "bar",
+      "result": 17,
+    },
+    "name": "taskFinish",
+  },
+  {
+    "event": {
+      "id": "baz",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "error": [Error: unknown error: weird baz error],
+      "id": "baz",
+    },
+    "name": "taskThrow",
+  },
+  {
+    "event": {
+      "tasksErrored": [
+        "baz",
+      ],
+      "tasksFinished": [
+        "foo",
+        "bar",
+      ],
+      "tasksSkipped": [],
+    },
+    "name": "workflowFinish",
+  },
+]
+`;
+
+exports[`a linear staged workflow > executes with a task that throws a non-error > taskOrder 1`] = `
+[
+  "foo",
+  "bar",
+  "baz",
+]
+`;
+
+exports[`a linear staged workflow > executes with no failed tasks > events 1`] = `
+[
+  {
+    "event": {
+      "context": {
+        "hello": "world",
+      },
+    },
+    "name": "workflowStart",
+  },
+  {
+    "event": {
+      "id": "foo",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "id": "foo",
+      "result": "{\\"hello\\":\\"world\\"}",
+    },
+    "name": "taskFinish",
+  },
+  {
+    "event": {
+      "id": "bar",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "id": "bar",
+      "result": 17,
+    },
+    "name": "taskFinish",
+  },
+  {
+    "event": {
+      "id": "baz",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "id": "baz",
+      "result": undefined,
+    },
+    "name": "taskFinish",
+  },
+  {
+    "event": {
+      "tasksErrored": [],
+      "tasksFinished": [
+        "foo",
+        "bar",
+        "baz",
+      ],
+      "tasksSkipped": [],
+    },
+    "name": "workflowFinish",
+  },
+]
+`;
+
+exports[`a linear staged workflow > executes with no failed tasks > taskOrder 1`] = `
+[
+  "foo",
+  "bar",
+  "baz",
+]
+`;
+
+exports[`a linear staged workflow > executes with the first task selected > events 1`] = `
+[
+  {
+    "event": {
+      "context": {
+        "hello": "world",
+      },
+    },
+    "name": "workflowStart",
+  },
+  {
+    "event": {
+      "id": "foo",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "id": "foo",
+      "result": "{\\"hello\\":\\"world\\"}",
+    },
+    "name": "taskFinish",
+  },
+  {
+    "event": {
+      "tasksErrored": [],
+      "tasksFinished": [
+        "foo",
+      ],
+      "tasksSkipped": [],
+    },
+    "name": "workflowFinish",
+  },
+]
+`;
+
+exports[`a linear staged workflow > executes with the first task selected > taskOrder 1`] = `
+[
+  "foo",
+]
+`;
+
+exports[`a linear staged workflow > executes with the second task selected > events 1`] = `
+[
+  {
+    "event": {
+      "context": {
+        "hello": "world",
+      },
+    },
+    "name": "workflowStart",
+  },
+  {
+    "event": {
+      "id": "foo",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "id": "foo",
+      "result": "{\\"hello\\":\\"world\\"}",
+    },
+    "name": "taskFinish",
+  },
+  {
+    "event": {
+      "id": "bar",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "id": "bar",
+      "result": 17,
+    },
+    "name": "taskFinish",
+  },
+  {
+    "event": {
+      "tasksErrored": [],
+      "tasksFinished": [
+        "foo",
+        "bar",
+      ],
+      "tasksSkipped": [],
+    },
+    "name": "workflowFinish",
+  },
+]
+`;
+
+exports[`a linear staged workflow > executes with the second task selected > taskOrder 1`] = `
+[
+  "foo",
+  "bar",
+]
+`;
+
+exports[`a linear staged workflow > executes with the second task selected and a failed dependency > events 1`] = `
+[
+  {
+    "event": {
+      "context": {
+        "hello": "world",
+      },
+    },
+    "name": "workflowStart",
+  },
+  {
+    "event": {
+      "id": "foo",
+    },
+    "name": "taskStart",
+  },
+  {
+    "event": {
+      "error": [Error: foo error],
+      "id": "foo",
+    },
+    "name": "taskThrow",
+  },
+  {
+    "event": {
+      "erroredDependencies": [
+        "foo",
+      ],
+      "id": "bar",
+      "skippedDependencies": [],
+    },
+    "name": "taskSkip",
+  },
+  {
+    "event": {
+      "tasksErrored": [
+        "foo",
+      ],
+      "tasksFinished": [],
+      "tasksSkipped": [
+        "bar",
+      ],
+    },
+    "name": "workflowFinish",
+  },
+]
+`;
+
+exports[`a linear staged workflow > executes with the second task selected and a failed dependency > taskOrder 1`] = `
+[
+  "foo",
+  "bar",
+]
+`;

@@ -94,3 +94,29 @@ export const concurrentExecutor = async <W extends UnknownWorkflowDefinition>({
 
   await Promise.all(promises.values())
 }
+
+export const stagedExecutor = async <W extends UnknownWorkflowDefinition>({
+  taskOrder,
+  getTask,
+  runTask,
+}: Parameters<WorkflowExecutor<W>>[0]) => {
+  const stages: TaskId<W>[][] = []
+  const heights = new Map<TaskId<W>, number>()
+
+  const markHeight = (id: TaskId<W>, height: number) => {
+    heights.set(id, height)
+    const stage = stages[height] || (stages[height] = [])
+    stage.push(id)
+  }
+
+  for (const id of taskOrder) {
+    const deps = getTask(id)!.dependencies
+    const height =
+      deps.length > 0
+        ? Math.max(...deps.map((dep) => heights.get(dep)!)) + 1
+        : 0
+    markHeight(id, height)
+  }
+
+  for (const stage of stages) await Promise.all(stage.map((id) => runTask(id)))
+}
