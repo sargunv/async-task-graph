@@ -27,16 +27,13 @@
       "@sargunv/eslint-config/mixins/commonjs",
       "@sargunv/eslint-config/mixins/typescript"
     ],
-    "ignorePatterns": [
-      "coverage"
-    ],
     "root": true
   },
   "dependencies": {
     "graph-data-structure": "^3.1.1"
   },
   "devDependencies": {
-    "@sargunv/eslint-config": "^0.5.2",
+    "@sargunv/eslint-config": "^0.5.3",
     "@sargunv/prettier-config": "^0.2.2",
     "@sargunv/typescript-config": "^0.1.0",
     "@types/node": "^18.13.0",
