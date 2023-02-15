@@ -95,7 +95,7 @@ export const concurrentExecutor =
     const limitFn = pLimit(opts.limit ?? Number.POSITIVE_INFINITY)
 
     for (const id of taskOrder) {
-      const promise = limitFn(() => waitForDepsThenRun(id))
+      const promise = limitFn(waitForDepsThenRun, id)
       promises.set(id, promise)
     }
 
@@ -127,8 +127,8 @@ export const stagedExecutor =
       markHeight(id, height)
     }
 
-    for (const stage of stages) {
-      const limitFn = pLimit(opts.limit ?? Number.POSITIVE_INFINITY)
-      await Promise.all(stage.map((id) => limitFn(() => runTask(id))))
-    }
+    const limitFn = pLimit(opts.limit ?? Number.POSITIVE_INFINITY)
+
+    for (const stage of stages)
+      await Promise.all(stage.map((id) => limitFn(runTask, id)))
   }
