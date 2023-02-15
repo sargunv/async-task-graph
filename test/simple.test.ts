@@ -31,7 +31,7 @@ describe(`a workflow builder`, () => {
   ])(`topo-sorts the tasks before execution (input %#)`, ({ tasks }) => {
     const wfBuilder = workflowBuilder<SimpleWorkflow>()
     for (const task of tasks) wfBuilder.addTask(task)
-    const { taskOrder } = wfBuilder.build(serialExecutor)
+    const { taskOrder } = wfBuilder.build(serialExecutor())
     expect(taskOrder).toEqual([`foo`, `bar`, `baz`])
   })
 
@@ -46,7 +46,7 @@ describe(`a workflow builder`, () => {
     wfBuilder.addTask(bazTask)
 
     expect(() =>
-      wfBuilder.build(concurrentExecutor),
+      wfBuilder.build(concurrentExecutor()),
     ).toThrowErrorMatchingInlineSnapshot(`"Task graph has a cycle"`)
   })
 
@@ -56,7 +56,7 @@ describe(`a workflow builder`, () => {
     wfBuilder.addTask(bazTask)
 
     expect(() =>
-      wfBuilder.build(concurrentExecutor),
+      wfBuilder.build(concurrentExecutor()),
     ).toThrowErrorMatchingInlineSnapshot(`"Task foo is not registered"`)
   })
 
@@ -88,7 +88,7 @@ describe(`a task with undeclared dependencies`, () => {
     for (const task of [badFooTask, barTask, undeclaredBazTask])
       wfBuilder.addTask(task)
 
-    const { emitter, runWorkflow } = wfBuilder.build(serialExecutor)
+    const { emitter, runWorkflow } = wfBuilder.build(serialExecutor())
 
     const throwFn = vi.fn()
     emitter.on(`taskThrow`, throwFn)
@@ -105,7 +105,7 @@ describe(`a task with undeclared dependencies`, () => {
     for (const task of [fooTask, badBarTask, undeclaredBazTask])
       wfBuilder.addTask(task)
 
-    const { emitter, runWorkflow } = wfBuilder.build(serialExecutor)
+    const { emitter, runWorkflow } = wfBuilder.build(serialExecutor())
 
     const throwFn = vi.fn()
     emitter.on(`taskThrow`, throwFn)
@@ -122,7 +122,7 @@ describe(`a task with undeclared dependencies`, () => {
     for (const task of [undeclaredBazTask, fooTask, barTask])
       wfBuilder.addTask(task)
 
-    const { emitter, runWorkflow } = wfBuilder.build(serialExecutor)
+    const { emitter, runWorkflow } = wfBuilder.build(serialExecutor())
 
     const throwFn = vi.fn()
     emitter.on(`taskThrow`, throwFn)
@@ -140,9 +140,9 @@ describe.each([`serial`, `concurrent`, `staged`] as const)(
   (type) => {
     const executor = (
       {
-        serial: serialExecutor,
-        concurrent: concurrentExecutor,
-        staged: stagedExecutor,
+        serial: serialExecutor(),
+        concurrent: concurrentExecutor(),
+        staged: stagedExecutor(),
       } as const
     )[type]
 

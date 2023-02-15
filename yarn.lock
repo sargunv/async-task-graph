@@ -903,6 +903,7 @@ __metadata:
     eslint: "npm:^8.34.0"
     graph-data-structure: "npm:^3.1.1"
     ignore-sync: "npm:^6.0.2"
+    p-limit: "npm:^4.0.0"
     prettier: "npm:^2.8.4"
     rimraf: "npm:^4.1.2"
     typescript: "npm:^4.9.5"

@@ -30,7 +30,8 @@
     "root": true
   },
   "dependencies": {
-    "graph-data-structure": "^3.1.1"
+    "graph-data-structure": "^3.1.1",
+    "p-limit": "^4.0.0"
   },
   "devDependencies": {
     "@sargunv/eslint-config": "^0.5.4",

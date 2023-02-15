@@ -1,3 +1,5 @@
+import pLimit from "p-limit"
+
 import type {
   Task,
   TaskFor,
@@ -65,58 +67,70 @@ export type WorkflowExecutor<W extends UnknownWorkflowDefinition> = (input: {
   runTask: (id: TaskId<W>) => Promise<void>
 }) => Promise<void>
 
-export const serialExecutor = async <W extends UnknownWorkflowDefinition>({
-  taskOrder,
-  runTask,
-}: Parameters<WorkflowExecutor<W>>[0]) => {
-  for (const id of taskOrder) await runTask(id)
-}
-
-export const concurrentExecutor = async <W extends UnknownWorkflowDefinition>({
-  taskOrder,
-  getTask,
-  runTask,
-}: Parameters<WorkflowExecutor<W>>[0]) => {
-  const promises = new Map<TaskId<W>, Promise<void>>()
-
-  const depPromises = (id: TaskId<W>) =>
-    getTask(id)!.dependencies.map((dep) => promises.get(dep))
-
-  const waitForDepsThenRun = async (id: TaskId<W>) => {
-    await Promise.all(depPromises(id))
-    await runTask(id)
+export const serialExecutor =
+  () =>
+  async <W extends UnknownWorkflowDefinition>({
+    taskOrder,
+    runTask,
+  }: // eslint-disable-next-line unicorn/consistent-function-scoping
+  Parameters<WorkflowExecutor<W>>[0]) => {
+    for (const id of taskOrder) await runTask(id)
   }
 
-  for (const id of taskOrder) {
-    const promise = waitForDepsThenRun(id)
-    promises.set(id, promise)
+export const concurrentExecutor =
+  (limit = Number.POSITIVE_INFINITY) =>
+  async <W extends UnknownWorkflowDefinition>({
+    taskOrder,
+    getTask,
+    runTask,
+  }: Parameters<WorkflowExecutor<W>>[0]) => {
+    const promises = new Map<TaskId<W>, Promise<void>>()
+
+    const depPromises = (id: TaskId<W>) =>
+      getTask(id)!.dependencies.map((dep) => promises.get(dep))
+
+    const waitForDepsThenRun = async (id: TaskId<W>) => {
+      await Promise.all(depPromises(id))
+      await runTask(id)
+    }
+
+    const limitFn = pLimit(limit)
+
+    for (const id of taskOrder) {
+      const promise = limitFn(() => waitForDepsThenRun(id))
+      promises.set(id, promise)
+    }
+
+    await Promise.all(promises.values())
   }
 
-  await Promise.all(promises.values())
-}
+export const stagedExecutor =
+  (limit = Number.POSITIVE_INFINITY) =>
+  async <W extends UnknownWorkflowDefinition>({
+    taskOrder,
+    getTask,
+    runTask,
+  }: Parameters<WorkflowExecutor<W>>[0]) => {
+    const stages: TaskId<W>[][] = []
+    const heights = new Map<TaskId<W>, number>()
 
-export const stagedExecutor = async <W extends UnknownWorkflowDefinition>({
-  taskOrder,
-  getTask,
-  runTask,
-}: Parameters<WorkflowExecutor<W>>[0]) => {
-  const stages: TaskId<W>[][] = []
-  const heights = new Map<TaskId<W>, number>()
+    const markHeight = (id: TaskId<W>, height: number) => {
+      heights.set(id, height)
+      const stage = stages[height] || (stages[height] = [])
+      stage.push(id)
+    }
 
-  const markHeight = (id: TaskId<W>, height: number) => {
-    heights.set(id, height)
-    const stage = stages[height] || (stages[height] = [])
-    stage.push(id)
+    for (const id of taskOrder) {
+      const deps = getTask(id)!.dependencies
+      const height =
+        deps.length > 0
+          ? Math.max(...deps.map((dep) => heights.get(dep)!)) + 1
+          : 0
+      markHeight(id, height)
+    }
+
+    for (const stage of stages) {
+      const limitFn = pLimit(limit)
+      await Promise.all(stage.map((id) => limitFn(() => runTask(id))))
+    }
   }
-
-  for (const id of taskOrder) {
-    const deps = getTask(id)!.dependencies
-    const height =
-      deps.length > 0
-        ? Math.max(...deps.map((dep) => heights.get(dep)!)) + 1
-        : 0
-    markHeight(id, height)
-  }
-
-  for (const stage of stages) await Promise.all(stage.map((id) => runTask(id)))
-}
