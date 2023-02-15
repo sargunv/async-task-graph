@@ -13,7 +13,7 @@ interdependencies, with a focus on well-typed task definitions.
 ## Usage
 
 ```ts
-import { workflowBuilder, serialExecutor } from "async-task-graph"
+import { workflowBuilder, concurrentExecutor } from "async-task-graph"
 
 const builder = workflowBuilder<{
   context: { hello: string }
@@ -40,7 +40,7 @@ builder.addTask({
   },
 })
 
-const { emitter, runWorkflow } = builder.build(serialExecutor)
+const { emitter, runWorkflow } = builder.build(concurrentExecutor())
 
 emitter.on(`taskFinish`, ({ id, result }) => {
   console.log(`${id} returned ${JSON.stringify(result)}`)
