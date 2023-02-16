@@ -42,7 +42,6 @@ export class Digraph<T extends string> {
 
     const visit = (node: T) => {
       if (visited.has(node)) return
-
       visited.add(node)
 
       for (const neighbor of this.adj.get(node)!) visit(neighbor)
