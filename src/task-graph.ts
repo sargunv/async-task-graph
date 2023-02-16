@@ -1,16 +1,15 @@
-import { Graph } from "graph-data-structure"
-
 import type {
   TaskFor,
   TaskId,
   UnknownWorkflowDefinition,
 } from "./core-types.js"
+import { Digraph } from "./digraph.js"
 
 export const validateTaskGraph = <W extends UnknownWorkflowDefinition>(
   tasks: Map<TaskId<W>, TaskFor<W>>,
   selectedTasks?: TaskId<W>[],
 ) => {
-  const graph = Graph()
+  const graph = new Digraph()
 
   for (const task of tasks.values()) {
     graph.addNode(task.id)
@@ -22,9 +21,7 @@ export const validateTaskGraph = <W extends UnknownWorkflowDefinition>(
 
   if (graph.hasCycle()) throw new Error(`Task graph has a cycle`)
 
-  const taskOrder: TaskId<W>[] = graph
-    .topologicalSort(selectedTasks, true)
-    .reverse()
+  const taskOrder: TaskId<W>[] = graph.topologicalSort(selectedTasks)
 
   // we only validate the selected subgraph
   for (const id of taskOrder)

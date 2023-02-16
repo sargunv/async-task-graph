@@ -33,7 +33,6 @@
     "root": true
   },
   "dependencies": {
-    "graph-data-structure": "patch:graph-data-structure@npm%3A3.1.1#~/.yarn/patches/graph-data-structure-npm-3.1.1-554596a94b.patch",
     "p-limit": "^4.0.0"
   },
   "devDependencies": {
