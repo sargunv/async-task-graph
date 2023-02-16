@@ -97,6 +97,6 @@ describe("a simple workflow definition", () => {
   // })
 
   it("allows easily inferring the union type of all task ids", () => {
-    assertType<"foo" | "bar" | "baz">(ALL_TASKS["hello".length % 3].id)
+    assertType<"foo" | "bar" | "baz">(ALL_TASKS["hello".length % 3]!.id)
   })
 })

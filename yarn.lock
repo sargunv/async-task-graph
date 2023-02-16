@@ -418,10 +418,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sargunv/typescript-config@npm:^0.1.0":
-  version: 0.1.0
-  resolution: "@sargunv/typescript-config@npm:0.1.0"
-  checksum: abf3544a45ef3e4963123cd64d1f0316f919a19641a12e24f8ab661b0401023016f4339120e97823b672858ac9ea73c81ed97b58d06d3606d5a641f2eb0e7ce1
+"@sargunv/typescript-config@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "@sargunv/typescript-config@npm:0.2.0"
+  peerDependencies:
+    typescript: "*"
+  checksum: 2171c0f0c0c79f0886987ecbfb6b6f779103dd26e27182f52a5721cb88997ac2cf721cbaf2415660c80c2edaaf5657cb75d56760f48b813db9cc5fd85b9ad049
   languageName: node
   linkType: hard
 
@@ -897,7 +899,7 @@ __metadata:
   dependencies:
     "@sargunv/eslint-config": "npm:^0.5.4"
     "@sargunv/prettier-config": "npm:^0.2.2"
-    "@sargunv/typescript-config": "npm:^0.1.0"
+    "@sargunv/typescript-config": "npm:^0.2.0"
     "@types/node": "npm:^18.13.0"
     "@vitest/coverage-c8": "npm:^0.28.5"
     eslint: "npm:^8.34.0"

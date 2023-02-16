@@ -1,5 +1,5 @@
 {
-  "extends": "@sargunv/typescript-config/node",
+  "extends": "@sargunv/typescript-config/presets/node-cjs",
   "compilerOptions": {
     "noEmit": true
   },

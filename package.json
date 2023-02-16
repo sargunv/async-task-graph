@@ -36,7 +36,7 @@
   "devDependencies": {
     "@sargunv/eslint-config": "^0.5.4",
     "@sargunv/prettier-config": "^0.2.2",
-    "@sargunv/typescript-config": "^0.1.0",
+    "@sargunv/typescript-config": "^0.2.0",
     "@types/node": "^18.13.0",
     "@vitest/coverage-c8": "^0.28.5",
     "eslint": "^8.34.0",
