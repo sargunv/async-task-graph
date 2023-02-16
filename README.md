@@ -3,7 +3,7 @@
 [![Codecov](https://img.shields.io/codecov/c/github/sargunv/async-task-graph?token=IIYTXZ5MRM)](https://app.codecov.io/gh/sargunv/async-task-graph/)
 [![License](https://img.shields.io/npm/l/async-task-graph)](https://github.com/sargunv/async-task-graph/blob/main/LICENSE)
 [![Node](https://img.shields.io/node/v/async-task-graph)](https://github.com/sargunv/async-task-graph/blob/main/package.json)
-[![CommonJS](https://img.shields.io/badge/module%20type-commonjs-brightgreen)](https://github.com/sargunv/async-task-graph/blob/main/package.json)
+[![ESM](https://img.shields.io/badge/module%20type-esm-brightgreen)](https://github.com/sargunv/async-task-graph/blob/main/package.json)
 
 # async-task-graph
 
