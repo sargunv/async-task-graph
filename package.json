@@ -5,9 +5,13 @@
   "homepage": "https://github.com/sargunv/async-task-graph",
   "repository": "github:sargunv/async-task-graph",
   "license": "Apache-2.0",
-  "type": "commonjs",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "files": [
     "./dist/*"
   ],
@@ -24,13 +28,12 @@
   "eslintConfig": {
     "extends": [
       "@sargunv/eslint-config",
-      "@sargunv/eslint-config/mixins/commonjs",
       "@sargunv/eslint-config/mixins/typescript"
     ],
     "root": true
   },
   "dependencies": {
-    "graph-data-structure": "^3.1.1",
+    "graph-data-structure": "patch:graph-data-structure@npm%3A3.1.1#~/.yarn/patches/graph-data-structure-npm-3.1.1-554596a94b.patch",
     "p-limit": "^4.0.0"
   },
   "devDependencies": {
