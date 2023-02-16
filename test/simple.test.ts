@@ -47,7 +47,7 @@ describe(`a workflow builder`, () => {
 
     expect(() =>
       wfBuilder.build(concurrentExecutor()),
-    ).toThrowErrorMatchingInlineSnapshot(`"Task graph has a cycle"`)
+    ).toThrowErrorMatchingInlineSnapshot(`"Graph has a cycle"`)
   })
 
   it(`throws when a required task is not registered`, () => {

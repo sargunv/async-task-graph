@@ -35,6 +35,8 @@ export class Digraph<T extends string> {
   }
 
   public topologicalSort(selectedNodes?: T[]): T[] {
+    if (this.hasCycle()) throw new Error(`Graph has a cycle`)
+
     const visited = new Set<T>()
     const order: T[] = []
 

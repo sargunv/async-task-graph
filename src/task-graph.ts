@@ -19,8 +19,6 @@ export const validateTaskGraph = <W extends UnknownWorkflowDefinition>(
     }
   }
 
-  if (graph.hasCycle()) throw new Error(`Task graph has a cycle`)
-
   const taskOrder: TaskId<W>[] = graph.topologicalSort(selectedTasks)
 
   // we only validate the selected subgraph
