@@ -2356,6 +2356,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"glob@npm:^9.2.0":
+  version: 9.2.1
+  resolution: "glob@npm:9.2.1"
+  dependencies:
+    fs.realpath: "npm:^1.0.0"
+    minimatch: "npm:^7.4.1"
+    minipass: "npm:^4.2.4"
+    path-scurry: "npm:^1.6.1"
+  checksum: b5a39cddb3ecde2d4b0b964b0904b8138aa3cd762ffbfb9341b0a62ce128a94b7a67ff7cb2dc3d7db6ee04d2a771bbacb3ec91d073b157a671c05bfe7525bb33
+  languageName: node
+  linkType: hard
+
 "globals@npm:^13.19.0":
   version: 13.20.0
   resolution: "globals@npm:13.20.0"
@@ -3152,6 +3164,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lru-cache@npm:^7.14.1":
+  version: 7.18.3
+  resolution: "lru-cache@npm:7.18.3"
+  checksum: 884c7cb51963cc45bc0d864c704d141c904c93db1bbc236be0eed759e35fc44b5e794a34b0666e193926e5a4320b66e787b1cf531f4f89ed8514a97156f07cb1
+  languageName: node
+  linkType: hard
+
 "lru-cache@npm:^7.7.1":
   version: 7.14.1
   resolution: "lru-cache@npm:7.14.1"
@@ -3250,6 +3269,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"minimatch@npm:^7.4.1":
+  version: 7.4.2
+  resolution: "minimatch@npm:7.4.2"
+  dependencies:
+    brace-expansion: "npm:^2.0.1"
+  checksum: 999e3c3f4b4ba953a18130bc395036103e0bbf02cba8d7d3db207965c9befdf09e6daf3f810fda35fff3d7687d5425662fdedca681813ef36537d62cdcde3da1
+  languageName: node
+  linkType: hard
+
 "minimist@npm:^1.2.0, minimist@npm:^1.2.6":
   version: 1.2.7
   resolution: "minimist@npm:1.2.7"
@@ -3321,6 +3349,13 @@ __metadata:
   version: 4.0.1
   resolution: "minipass@npm:4.0.1"
   checksum: 47cdef2b0853451b5adbd2db83121f4bfd134d02c0f16274b22a6f34dae03759e6e1da8743540962e7ec361beffcce29d149f29428373a0bfa72505bf706dc97
+  languageName: node
+  linkType: hard
+
+"minipass@npm:^4.0.2, minipass@npm:^4.2.4":
+  version: 4.2.4
+  resolution: "minipass@npm:4.2.4"
+  checksum: 39b2e353044a8b4c7d160ccffae9486312137df28a9e2a8d093a528a9d3602b4dce2b2204a17ca11762d352bd9750fd6506229766a0fb7a6199092aa3f9490e5
   languageName: node
   linkType: hard
 
@@ -3684,6 +3719,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"path-scurry@npm:^1.6.1":
+  version: 1.6.1
+  resolution: "path-scurry@npm:1.6.1"
+  dependencies:
+    lru-cache: "npm:^7.14.1"
+    minipass: "npm:^4.0.2"
+  checksum: a58f1b86ca95c39e339a0ef1e93c3a907ad474102e3ceba8c8d9c60a5cdb08ceae270d86f28d8881d492cf4607a1cade128783ae88f46b5d407b187639e7cb38
+  languageName: node
+  linkType: hard
+
 "path-type@npm:^4.0.0":
   version: 4.0.0
   resolution: "path-type@npm:4.0.0"
@@ -4031,11 +4076,13 @@ __metadata:
   linkType: hard
 
 "rimraf@npm:^4.1.2":
-  version: 4.1.2
-  resolution: "rimraf@npm:4.1.2"
+  version: 4.3.1
+  resolution: "rimraf@npm:4.3.1"
+  dependencies:
+    glob: "npm:^9.2.0"
   bin:
     rimraf: dist/cjs/src/bin.js
-  checksum: dee884aa7e6230e35193e93fda180ae8289bc4a75feca10fa5961db776f1a80caa3a5c3bab6e982af3bd1e95145155ab32562e5e6638eb80fca49e50375e1d87
+  checksum: 363f3bfbfb90cf367d1c471526a49f08b9a8e714b88c906a53fa08dc7a14a5b282ebad5d334d8518d0102667e34c55e0e1b1873676c956e0fbccfe6cc03ee347
   languageName: node
   linkType: hard
 
