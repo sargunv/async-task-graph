@@ -472,9 +472,9 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*, @types/node@npm:^18.13.0":
-  version: 18.14.2
-  resolution: "@types/node@npm:18.14.2"
-  checksum: 129305df2c8e761c22cfa7a88ab780577864c8fc53a5b70cabbe4dd595e4b38b211b73a4380d0a18bf5da3634081bfa554cccf52dfd5e228e7a27de12c857aaf
+  version: 18.15.2
+  resolution: "@types/node@npm:18.15.2"
+  checksum: eecf4ab9f7c70dd469cf2aa9ecc09a02dafde05d54c1c459a40ea885fad7f0b28acb0f163f0d820f1da33043813e8fb255fd027032b4e7cdfc5010f54b60efb8
   languageName: node
   linkType: hard
 
