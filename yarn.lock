@@ -4076,13 +4076,13 @@ __metadata:
   linkType: hard
 
 "rimraf@npm:^4.1.2":
-  version: 4.3.1
-  resolution: "rimraf@npm:4.3.1"
+  version: 4.4.1
+  resolution: "rimraf@npm:4.4.1"
   dependencies:
     glob: "npm:^9.2.0"
   bin:
     rimraf: dist/cjs/src/bin.js
-  checksum: 363f3bfbfb90cf367d1c471526a49f08b9a8e714b88c906a53fa08dc7a14a5b282ebad5d334d8518d0102667e34c55e0e1b1873676c956e0fbccfe6cc03ee347
+  checksum: 1dcc3cb6a13a806fc276996d2e0d20abae62a96f2a663a79e3e30be711a23da29f814a322412827b5b6e58b535382096cbaf261cbd2f7790c5a37e6ea31150dd
   languageName: node
   linkType: hard
 
